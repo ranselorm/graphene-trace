@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
+import { Icon } from "@iconify/react";
 
 // shadcn/ui
 import {
@@ -22,6 +23,19 @@ function roleHome(role: "patient" | "clinician" | "admin") {
   return "/admin";
 }
 
+function PasswordRequirement({ met, text }: { met: boolean; text: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      {met ? (
+        <Icon icon="mdi:check-circle" className="text-green-500" />
+      ) : (
+        <Icon icon="mdi:circle-outline" className="text-zinc-500" />
+      )}
+      <span className={met ? "text-green-500" : "text-zinc-500"}>{text}</span>
+    </div>
+  );
+}
+
 export function LoginPage() {
   const { login, session, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -34,6 +48,18 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const passwordValidation = useMemo(() => {
+    return {
+      minLength: password.length >= 8,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+    };
+  }, [password]);
+
+  const isPasswordValid = Object.values(passwordValidation).every(Boolean);
 
   const demoHints = useMemo(
     () => [
@@ -135,17 +161,50 @@ export function LoginPage() {
                         placeholder="••••••••"
                         required
                       />
+
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-700 text-sm"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 hover:text-zinc-700 text-sm cursor-pointer"
                       >
-                        {showPassword ? "Hide" : "Show"}
+                        {showPassword ? (
+                          <Icon icon="mdi-light:eye-off" />
+                        ) : (
+                          <Icon icon="mdi-light:eye" />
+                        )}
                       </button>
+                    </div>
+
+                    {/* Password Requirements */}
+                    <div className="mt-2 space-y-1.5 text-xs">
+                      <PasswordRequirement
+                        met={passwordValidation.minLength}
+                        text="At least 8 characters"
+                      />
+                      <PasswordRequirement
+                        met={passwordValidation.hasUppercase}
+                        text="One uppercase letter"
+                      />
+                      <PasswordRequirement
+                        met={passwordValidation.hasLowercase}
+                        text="One lowercase letter"
+                      />
+                      <PasswordRequirement
+                        met={passwordValidation.hasNumber}
+                        text="One number"
+                      />
+                      <PasswordRequirement
+                        met={passwordValidation.hasSymbol}
+                        text="One special character"
+                      />
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading || !isPasswordValid}
+                  >
                     {loading ? "Signing in..." : "Sign in"}
                   </Button>
                 </form>
