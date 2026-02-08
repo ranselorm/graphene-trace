@@ -2,7 +2,6 @@ import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import type { Role } from "../lib/auth";
 import { useAuth } from "../lib/auth";
 
-// Pages (we’ll create these next, keep the imports ready)
 import { LoginPage } from "../pages/Login";
 
 // Layouts (we’ll create these next)
