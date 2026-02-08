@@ -27,11 +27,11 @@ function PasswordRequirement({ met, text }: { met: boolean; text: string }) {
   return (
     <div className="flex items-center gap-2">
       {met ? (
-        <Icon icon="mdi:check-circle" className="text-green-500" />
+        <Icon icon="mdi:check-circle" className="text-primary" />
       ) : (
         <Icon icon="mdi:circle-outline" className="text-zinc-500" />
       )}
-      <span className={met ? "text-green-500" : "text-zinc-500"}>{text}</span>
+      <span className={met ? "text-primary" : "text-zinc-500"}>{text}</span>
     </div>
   );
 }
@@ -44,11 +44,12 @@ export function LoginPage() {
   const from = (location.state as any)?.from as string | undefined;
 
   const [email, setEmail] = useState("patient@demo.com");
-  const [password, setPassword] = useState("password");
+  const [password, setPassword] = useState("@Password123");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  //password validation
   const passwordValidation = useMemo(() => {
     return {
       minLength: password.length >= 8,
@@ -147,7 +148,7 @@ export function LoginPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-zinc-200">
+                    <Label htmlFor="password" className="text-zinc-800">
                       Password
                     </Label>
                     <div className="relative">
@@ -209,17 +210,17 @@ export function LoginPage() {
                   </Button>
                 </form>
 
-                <div className="mt-5 rounded-lg border border-zinc-800 bg-zinc-950 p-3">
-                  <div className="text-xs text-zinc-400 mb-2">
+                <div className="mt-5 rounded-lg border border-zinc-800 p-3">
+                  <div className="text-xs text-zinc-800 mb-2">
                     Demo accounts
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex gap-2">
                     {demoHints.map((d) => (
                       <Button
                         key={d.email}
                         type="button"
-                        variant="secondary"
-                        className="bg-zinc-900 border border-zinc-800 hover:bg-zinc-800"
+                        variant="outline"
+                        className="border border-zinc-800 cursor-pointer bg-transparent text-xs text-zinc-800"
                         onClick={() => {
                           setEmail(d.email);
                           setPassword("password");
@@ -232,7 +233,9 @@ export function LoginPage() {
                   </div>
                   <div className="mt-2 text-xs text-zinc-500">
                     Password for all demo accounts:{" "}
-                    <span className="text-zinc-300">password</span>
+                    <span className="text-zinc-600 font-bold">
+                      @Password123
+                    </span>
                   </div>
                 </div>
               </CardContent>

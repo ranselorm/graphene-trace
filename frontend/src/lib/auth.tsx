@@ -46,7 +46,7 @@ const MOCK_USERS: Array<{
 }> = [
   {
     email: "patient@demo.com",
-    password: "password",
+    password: "@Password123",
     user: {
       id: "u_pat_001",
       email: "patient@demo.com",
@@ -56,7 +56,7 @@ const MOCK_USERS: Array<{
   },
   {
     email: "clinician@demo.com",
-    password: "password",
+    password: "@Password123",
     user: {
       id: "u_cli_001",
       email: "clinician@demo.com",
@@ -66,7 +66,7 @@ const MOCK_USERS: Array<{
   },
   {
     email: "admin@demo.com",
-    password: "password",
+    password: "@Password123",
     user: {
       id: "u_adm_001",
       email: "admin@demo.com",
