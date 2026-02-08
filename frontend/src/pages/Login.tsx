@@ -31,6 +31,7 @@ export function LoginPage() {
 
   const [email, setEmail] = useState("patient@demo.com");
   const [password, setPassword] = useState("password");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,7 +88,7 @@ export function LoginPage() {
                 <CardTitle className="text-3xl">
                   Welcome back to Graphene Trace
                 </CardTitle>
-                <CardDescription className="text-zinc-400">
+                <CardDescription className="text-zinc-800">
                   Using demo accounts for now. Backend auth comes later.
                 </CardDescription>
               </CardHeader>
@@ -104,14 +105,14 @@ export function LoginPage() {
 
                 <form onSubmit={onSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-zinc-200">
+                    <Label htmlFor="email" className="text-zinc-800">
                       Email
                     </Label>
                     <Input
                       id="email"
                       type="email"
                       autoComplete="email"
-                      className="bg-zinc-950 border-zinc-800 text-zinc-50"
+                      className="border-primary text-zinc-800"
                       value={email}
                       onChange={(e: any) => setEmail(e.target.value)}
                       placeholder="you@example.com"
@@ -123,16 +124,25 @@ export function LoginPage() {
                     <Label htmlFor="password" className="text-zinc-200">
                       Password
                     </Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      autoComplete="current-password"
-                      className="bg-zinc-950 border-zinc-800 text-zinc-50"
-                      value={password}
-                      onChange={(e: any) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        className="border-primary text-zinc-800 pr-10"
+                        value={password}
+                        onChange={(e: any) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-700 text-sm"
+                      >
+                        {showPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
                   </div>
 
                   <Button type="submit" className="w-full" disabled={loading}>
