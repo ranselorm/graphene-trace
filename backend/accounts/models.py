@@ -1,3 +1,13 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-# Create your models here.
+
+class User(AbstractUser):
+    class Role(models.TextChoices):
+        ADMIN = "admin", "Admin"
+        CLINICIAN = "clinician", "Clinician"
+        PATIENT = "patient", "Patient"
+
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.PATIENT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)

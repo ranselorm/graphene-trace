@@ -24,6 +24,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [],
 }
 
+# AUTH_USER_MODEL = "accounts.User"
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -48,17 +50,15 @@ INSTALLED_APPS = [
     "corsheaders",
     'api',
     'rest_framework',
+    'accounts',
     'patients',
     'clinicians',
     'telemetry',
     'alerts',
     'comments',
-
-    
-
-
-
 ]
+
+AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
