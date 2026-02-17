@@ -106,7 +106,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-screen text-zinc-50 flex items-center justify-center p-6">
+    <div className="min-h-screen w-screen text-zinc-800 flex items-center justify-center p-6">
       <div className="mx-auto container">
         <div className="flex flex-col-reverse md:flex-row justify-between items-center w-full gap-y-4">
           <div className="flex-1 flex flex-col md:h-190 justify-between">
@@ -215,35 +215,35 @@ export function LoginPage() {
                       {loading ? "Signing in..." : "Sign in"}
                     </Button>
                   </form>
-                  {/* 
-                <div className="mt-5 rounded-lg border border-zinc-300 p-3">
-                  <div className="text-xs text-zinc-800 mb-2">
-                    Demo accounts
+
+                  <div className="mt-5 rounded-lg border border-zinc-300 p-3">
+                    <div className="text-xs text-zinc-800 mb-2">
+                      Demo accounts
+                    </div>
+                    <div className="flex gap-2">
+                      {demoHints.map((d) => (
+                        <Button
+                          key={d.email}
+                          type="button"
+                          variant="outline"
+                          className="border border-zinc-300 cursor-pointer bg-transparent text-xs text-zinc-800 shadow-none"
+                          onClick={() => {
+                            setEmail(d.email);
+                            setPassword("@Password123");
+                            setError(null);
+                          }}
+                        >
+                          {d.label}
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="mt-2 text-xs text-zinc-500">
+                      Password for all demo accounts:{" "}
+                      <span className="text-zinc-600 font-bold">
+                        @Password123
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    {demoHints.map((d) => (
-                      <Button
-                        key={d.email}
-                        type="button"
-                        variant="outline"
-                        className="border border-zinc-300 cursor-pointer bg-transparent text-xs text-zinc-800 shadow-none"
-                        onClick={() => {
-                          setEmail(d.email);
-                          setPassword("@Password123");
-                          setError(null);
-                        }}
-                      >
-                        {d.label}
-                      </Button>
-                    ))}
-                  </div>
-                  <div className="mt-2 text-xs text-zinc-500">
-                    Password for all demo accounts:{" "}
-                    <span className="text-zinc-600 font-bold">
-                      @Password123
-                    </span>
-                  </div>
-                </div> */}
                 </CardContent>
 
                 <CardFooter className="text-xs text-zinc-500">
@@ -252,7 +252,12 @@ export function LoginPage() {
                 </CardFooter>
               </Card>
             </div>
-            <p className="bg-red-900">hello</p>
+            {/* <div></div> */}
+            {/* <p className="bg-red-900">hello</p> */}
+            <div className="flex items-center gap-x-1">
+              <Icon icon="solar:copyright-line-duotone" />
+              <p className="text-xs">Graphen Trace 2026</p>
+            </div>
           </div>
 
           {/* hero image */}
