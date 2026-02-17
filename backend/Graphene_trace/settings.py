@@ -55,7 +55,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173' #make sure this goes to ur computers local host for react
 ]
-ROOT_URLCONF = 'Graphene_trace.urls'
+ROOT_URLCONF = 'graphene_trace.urls'
 
 TEMPLATES = [
     {
@@ -72,7 +72,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'Graphene_trace.wsgi.application'
+WSGI_APPLICATION = 'graphene_trace.wsgi.application'
 
 
 # Database
@@ -82,7 +82,7 @@ WSGI_APPLICATION = 'Graphene_trace.wsgi.application'
 DATABASES = { #connects the django to your database, make sure the details match ur postgreSQL details
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'Graphene-trace',         
+        'NAME': 'graphene-trace',         
         'USER': 'djangouser',         
         'PASSWORD': 'password123', 
         'HOST': 'localhost',          
