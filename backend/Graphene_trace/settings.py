@@ -15,6 +15,14 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": [],
+}
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -39,6 +47,17 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "corsheaders",
     'api',
+    'rest_framework',
+    'patients',
+    'clinicians',
+    'telemetry',
+    'alerts',
+    'comments',
+
+    
+
+
+
 ]
 
 MIDDLEWARE = [
@@ -82,9 +101,9 @@ WSGI_APPLICATION = 'graphene_trace.wsgi.application'
 DATABASES = { #connects the django to your database, make sure the details match ur postgreSQL details
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'graphene-trace',         
-        'USER': 'djangouser',         
-        'PASSWORD': 'password123', 
+        'NAME': 'graphene_trace',         
+        'USER': 'graphene_user',         
+        'PASSWORD': 'Password123', 
         'HOST': 'localhost',          
         'PORT': '5432',               # default PostgreSQL port
     }
