@@ -6,7 +6,7 @@ import Navbar from "@/components/Navbar";
 
 export function AdminLayout() {
   return (
-    <div className="min-h-screen bg-white text-zinc-50">
+    <div className="min-h-screen bg-white">
       <div className="flex">
         {/* Sidebar */}
         <Sidebar />
