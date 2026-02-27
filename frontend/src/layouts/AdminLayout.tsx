@@ -13,24 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-function ShellNavLink({ to, label }: { to: string; label: string }) {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        [
-          "block rounded-md px-3 py-2 text-sm transition-colors",
-          isActive
-            ? "bg-zinc-800 text-zinc-50"
-            : "text-zinc-300 hover:bg-zinc-900 hover:text-zinc-50",
-        ].join(" ")
-      }
-    >
-      {label}
-    </NavLink>
-  );
-}
+import Sidebar from "@/components/admin/Sidebar";
+import Navbar from "@/components/Navbar";
 
 export function AdminLayout() {
   const { session, logout } = useAuth();
@@ -42,39 +26,11 @@ export function AdminLayout() {
     <div className="min-h-screen bg-white text-zinc-50">
       <div className="flex">
         {/* Sidebar */}
-        <aside className="hidden md:flex md:w-64 md:flex-col border-r border-zinc-900 min-h-screen">
-          <div className="p-4">
-            <div className="text-sm text-zinc-400">Portal</div>
-            <div className="text-lg font-semibold leading-tight">Admin</div>
-          </div>
-
-          <Separator className="bg-zinc-900" />
-
-          <nav className="p-3 space-y-1">
-            <ShellNavLink to="/admin" label="Overview" />
-            <ShellNavLink to="/admin/users" label="Users (soon)" />
-            <ShellNavLink to="/admin/assignments" label="Assignments (soon)" />
-            <ShellNavLink to="/admin/settings" label="Settings (soon)" />
-          </nav>
-
-          <div className="mt-auto p-3">
-            <Separator className="bg-zinc-900 mb-3" />
-            <Button
-              variant="secondary"
-              className="w-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800"
-              onClick={() => {
-                logout();
-                navigate("/login", { replace: true });
-              }}
-            >
-              Log out
-            </Button>
-          </div>
-        </aside>
+        <Sidebar />
 
         {/* Main */}
         <div className="flex-1 min-w-0">
-          <header className="sticky top-0 z-10 border-b border-zinc-900 bg-white backdrop-blur">
+          {/* <header className="sticky top-0 z-10 border-b border-zinc-900 bg-white backdrop-blur">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="md:hidden">
                 <div className="text-sm text-zinc-400">Admin Portal</div>
@@ -134,7 +90,9 @@ export function AdminLayout() {
                 </DropdownMenu>
               </div>
             </div>
-          </header>
+          </header> */}
+
+          <Navbar />
 
           <main className="p-4 md:p-6">
             <Outlet />
