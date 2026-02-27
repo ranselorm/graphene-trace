@@ -9,6 +9,11 @@ import { PatientLayout } from "./layouts/PatientLayout";
 import { ClinicianLayout } from "./layouts/ClinicianLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
 import { AdminOverviewPage } from "./pages/admin/Overview";
+import Users from "./pages/admin/Users";
+import Patients from "./pages/admin/Patients";
+import Clinicians from "./pages/admin/Clinicians";
+import Settings from "./pages/admin/Settings";
+import Assignments from "./pages/admin/Assignments";
 
 // Placeholder screens for now (we’ll replace with real pages later)
 const PatientDashboard = () => (
@@ -115,6 +120,11 @@ export function App() {
         <Route element={<RequireRole allow={["admin"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminOverviewPage />} />
+            <Route path="users" element={<Users />} />
+            <Route path="patients" element={<Patients />} />
+            <Route path="clinicians" element={<Clinicians />} />
+            <Route path="assignments" element={<Assignments />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
         </Route>
       </Route>
