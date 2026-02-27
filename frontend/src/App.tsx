@@ -8,6 +8,7 @@ import { LoginPage } from "@/pages/Login";
 import { PatientLayout } from "./layouts/PatientLayout";
 import { ClinicianLayout } from "./layouts/ClinicianLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
+import { AdminOverviewPage } from "./pages/admin/Overview";
 
 // Placeholder screens for now (we’ll replace with real pages later)
 const PatientDashboard = () => (
@@ -16,7 +17,6 @@ const PatientDashboard = () => (
 const ClinicianHome = () => (
   <div className="p-6">Clinician Home (placeholder)</div>
 );
-const AdminHome = () => <div className="p-6">Admin Home (placeholder)</div>;
 
 function roleHome(role: Role) {
   switch (role) {
@@ -114,7 +114,7 @@ export function App() {
         {/* Admin portal */}
         <Route element={<RequireRole allow={["admin"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminHome />} />
+            <Route index element={<AdminOverviewPage />} />
           </Route>
         </Route>
       </Route>

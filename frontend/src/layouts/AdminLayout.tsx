@@ -39,7 +39,7 @@ export function AdminLayout() {
   const user = session?.user;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50">
+    <div className="min-h-screen bg-white text-zinc-50">
       <div className="flex">
         {/* Sidebar */}
         <aside className="hidden md:flex md:w-64 md:flex-col border-r border-zinc-900 min-h-screen">
@@ -74,7 +74,7 @@ export function AdminLayout() {
 
         {/* Main */}
         <div className="flex-1 min-w-0">
-          <header className="sticky top-0 z-10 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur">
+          <header className="sticky top-0 z-10 border-b border-zinc-900 bg-white backdrop-blur">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="md:hidden">
                 <div className="text-sm text-zinc-400">Admin Portal</div>
@@ -110,7 +110,7 @@ export function AdminLayout() {
 
                   <DropdownMenuContent
                     align="end"
-                    className="bg-zinc-950 border-zinc-800 text-zinc-50"
+                    className="bg-gray-50 border-zinc-800 text-zinc-50"
                   >
                     <DropdownMenuLabel>Account</DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-zinc-800" />
