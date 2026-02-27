@@ -52,7 +52,7 @@ function Tag({ tag }: { tag?: ActivityItem["tag"] }) {
   return <Badge variant="outline">Info</Badge>;
 }
 
-export function AdminOverviewPage() {
+function Overview() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
@@ -145,3 +145,5 @@ export function AdminOverviewPage() {
     </div>
   );
 }
+
+export default Overview;
