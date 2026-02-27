@@ -8,19 +8,34 @@ import {
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { routesConfig } from "@/routesConfig";
 
 const Navbar = () => {
   const { session, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const user = session?.user;
+
+  const pathname = location.pathname;
+
+  // Extract last segment or use full path
+  const lastSegment = pathname.split("/").filter(Boolean).pop() || "admin";
+
+  const currentRoute = routesConfig.find(
+    (route) => route.path === pathname || route.path === lastSegment,
+  );
+  const title = currentRoute?.title || "Overview";
+
+  console.log(title);
+
   return (
-    <header className="sticky top-0 z-10 border-b border-zinc-900 bg-white backdrop-blur">
+    <header className="sticky top-0 z-10 border-b border-gray-300 bg-white backdrop-blur">
       <div className="flex items-center justify-between px-4 py-3">
-        <div className="md:hidden">
-          <div className="text-sm text-zinc-400">Admin Portal</div>
+        <div className="">
+          <div className="text-sm text-black font-black">{title}</div>
         </div>
 
         <div className="ml-auto flex items-center gap-3">

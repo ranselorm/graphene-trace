@@ -24,18 +24,18 @@ export const routesConfig = [
   {
     path: "patients",
     title: "Patients",
-    element: React.createElement(Users),
+    element: React.createElement(Patients),
   },
 
   {
     path: "clinicians",
     title: "Clinicians",
-    element: React.createElement(Users),
+    element: React.createElement(Clinicians),
   },
   {
     path: "assignments",
     title: "Assignments",
-    element: React.createElement(Users),
+    element: React.createElement(Assignments),
   },
   {
     path: "settings",
