@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import MetricsCard from "@/components/admin/MetricsCard";
 
 type Stat = {
   label: string;
@@ -55,16 +56,33 @@ function Tag({ tag }: { tag?: ActivityItem["tag"] }) {
 function Overview() {
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-xl font-semibold">Overview</h1>
-        <p className="text-sm text-zinc-400">
-          A quick snapshot of users, assignments, and alerts.
-        </p>
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((s) => (
-          <Card key={s.label} className="bg-white border-zinc-800">
+        <MetricsCard
+          label="Total Users"
+          value={210}
+          hint="+5 this week"
+          icon="clarity:users-line"
+        />
+        <MetricsCard
+          label="Patients"
+          value={210}
+          hint="+5 this week"
+          icon="material-symbols-light:recent-patient-rounded"
+        />
+        <MetricsCard
+          label="Clinician"
+          value={210}
+          hint="+5 this week"
+          icon="healthicons:doctor"
+        />
+        <MetricsCard
+          label="Alerts"
+          value={210}
+          hint="+5 this week"
+          icon="fluent:alert-24-regular"
+        />
+        {/* {stats.map((s) => (
+          <Card key={s.label} className="bg-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-zinc-300">
                 {s.label}
@@ -79,7 +97,7 @@ function Overview() {
               ) : null}
             </CardContent>
           </Card>
-        ))}
+        ))} */}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

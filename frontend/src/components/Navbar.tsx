@@ -41,7 +41,7 @@ const Navbar = () => {
         <div className="ml-auto flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-10 px-2 hover:bg-zinc-900">
+              <Button variant="ghost" className="h-10 px-2 hover:bg-gray-200">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-zinc-900 text-zinc-200">
                     {(user?.name ?? "A")
@@ -56,7 +56,7 @@ const Navbar = () => {
                   <div className="text-sm leading-tight">
                     {user?.name ?? "Admin"}
                   </div>
-                  <div className="text-xs text-zinc-400 leading-tight">
+                  <div className="text-xs text-zinc-600 leading-tight">
                     {user?.email ?? ""}
                   </div>
                 </div>
@@ -65,19 +65,24 @@ const Navbar = () => {
 
             <DropdownMenuContent
               align="end"
-              className="bg-gray-50 border-zinc-800 text-zinc-50"
+              className="bg-gray-50 border-zinc-800"
             >
-              <DropdownMenuLabel>Account</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-zinc-800" />
               <DropdownMenuItem
-                className="cursor-pointer focus:bg-zinc-900"
+                className="cursor-pointer focus:bg-gray-200"
+                onClick={() => navigate("/admin/settings")}
+              >
+                Account
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-gray-300" />
+              <DropdownMenuItem
+                className="cursor-pointer focus:bg-gray-200"
                 onClick={() => navigate("/admin")}
               >
                 Overview
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-zinc-800" />
+              <DropdownMenuSeparator className="bg-gray-300" />
               <DropdownMenuItem
-                className="cursor-pointer text-red-300 focus:bg-zinc-900"
+                className="cursor-pointer text-red-400 focus:bg-gray-200 focus:text-red-500"
                 onClick={() => {
                   logout();
                   navigate("/login", { replace: true });

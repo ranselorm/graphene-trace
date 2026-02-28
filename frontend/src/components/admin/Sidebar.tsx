@@ -1,7 +1,5 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "../ui/button";
-import { useAuth } from "@/lib/auth";
+import { NavLink } from "react-router-dom";
+
 import { Icon } from "@iconify/react";
 
 const links = [
@@ -32,11 +30,8 @@ function ShellNavLink({ to, label }: { to: string; label: string }) {
   );
 }
 const Sidebar = () => {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
   return (
-    <aside className="hidden md:flex md:w-64 md:flex-col border-r border-gray-300 min-h-screen text-zinc-900">
+    <aside className="hidden md:flex md:w-64 md:flex-col border-r border-gray-300 min-h-screen bg-white">
       <div className="p-4">
         <div className="flex items-end cursor-pointer w-max">
           <Icon
