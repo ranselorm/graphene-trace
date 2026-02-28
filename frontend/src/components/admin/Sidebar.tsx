@@ -62,19 +62,13 @@ const Sidebar = () => {
         <ShellNavLink to="/admin/settings" label="Settings" /> */}
       </nav>
 
-      <div className="mt-auto p-3">
-        <Separator className="bg-zinc-900 mb-3" />
-        <Button
-          variant="secondary"
-          className="w-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800"
-          onClick={() => {
-            logout();
-            navigate("/login", { replace: true });
-          }}
-        >
-          Log out
-        </Button>
-      </div>
+      {/* <div className="mt-auto mx-auto p-3">
+        <Separator className="bg-gray-300 mb-3" />
+        <div className="flex items-center gap-x-1">
+          <Icon icon="solar:copyright-line-duotone" />
+          <p className="text-xs">Graphene Trace 2026</p>
+        </div>
+      </div> */}
     </aside>
   );
 };

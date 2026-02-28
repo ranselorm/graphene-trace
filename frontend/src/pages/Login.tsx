@@ -252,11 +252,9 @@ export function LoginPage() {
                 </CardFooter>
               </Card>
             </div>
-            {/* <div></div> */}
-            {/* <p className="bg-red-900">hello</p> */}
             <div className="flex items-center gap-x-1">
               <Icon icon="solar:copyright-line-duotone" />
-              <p className="text-xs">Graphen Trace 2026</p>
+              <p className="text-xs">Graphene Trace 2026</p>
             </div>
           </div>
 
