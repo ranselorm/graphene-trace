@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 
 class Alert(models.Model):
-    patient = models.ForeignKey("patients.Patient", on_delete=models.CASCADE, related_name="alerts")
+    patient = models.ForeignKey("patients.PatientProfile", on_delete=models.CASCADE, related_name="alerts")
     sensor_frame = models.ForeignKey("telemetry.SensorFrame", on_delete=models.CASCADE, related_name="alerts")
 
     alert_type = models.CharField(max_length=50)

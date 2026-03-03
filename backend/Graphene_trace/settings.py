@@ -20,8 +20,12 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
-    "DEFAULT_PERMISSION_CLASSES": [],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 # AUTH_USER_MODEL = "accounts.User"
@@ -74,7 +78,13 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173' #make sure this goes to ur computers local host for react
 ]
-ROOT_URLCONF = 'graphene_trace.urls'
+
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
+]
+ROOT_URLCONF = 'Graphene_trace.urls'
 
 TEMPLATES = [
     {
@@ -91,7 +101,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'graphene_trace.wsgi.application'
+WSGI_APPLICATION = 'Graphene_trace.wsgi.application'
 
 
 # Database
