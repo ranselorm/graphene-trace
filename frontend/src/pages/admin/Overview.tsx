@@ -59,45 +59,28 @@ function Overview() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricsCard
           label="Total Users"
-          value={210}
-          hint="+5 this week"
+          value={7}
+          change={2}
           icon="clarity:users-line"
         />
         <MetricsCard
           label="Patients"
-          value={210}
-          hint="+5 this week"
-          icon="material-symbols-light:recent-patient-rounded"
+          value={5}
+          change={3}
+          icon="material-symbols-light:recent-patient-outline-rounded"
         />
         <MetricsCard
           label="Clinician"
-          value={210}
-          hint="+5 this week"
+          value={3}
+          change={-2}
           icon="healthicons:doctor"
         />
         <MetricsCard
-          label="Alerts"
-          value={210}
-          hint="+5 this week"
+          label="Active Alerts"
+          value={15}
+          change={4}
           icon="fluent:alert-24-regular"
         />
-        {/* {stats.map((s) => (
-          <Card key={s.label} className="bg-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-zinc-300">
-                {s.label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-semibold tracking-tight">
-                {s.value}
-              </div>
-              {s.hint ? (
-                <div className="mt-1 text-xs text-zinc-500">{s.hint}</div>
-              ) : null}
-            </CardContent>
-          </Card>
-        ))} */}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

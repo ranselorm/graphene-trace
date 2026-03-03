@@ -4,20 +4,35 @@ import { Icon } from "@iconify/react";
 interface MetricsCardProps {
   label: string;
   value: number;
-  hint?: string;
+  change?: number;
   icon: string;
 }
 
-const MetricsCard = ({ label, value, hint, icon }: MetricsCardProps) => {
+const MetricsCard = ({ label, value, change, icon }: MetricsCardProps) => {
   return (
-    <Card className="bg-white shadow-none border-none">
-      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+    <Card className="bg-white shadow-none border-none py-3">
+      <CardHeader className="flex flex-row items-center space-y-0 gap-x-4">
+        <div className="p-2 bg-blue-100 rounded-full">
+          <Icon icon={icon} className="text-xl text-primary" />
+        </div>
         <CardTitle className=" font-medium">{label}</CardTitle>
-        <Icon icon={icon} className="text-2xl" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="mt-0 flex items-center justify-between">
         <div className="text-2xl font-semibold tracking-tight">{value}</div>
-        {hint ? <div className="mt-1 text-xs text-zinc-500">{hint}</div> : null}
+        {change !== undefined && (
+          <div className="flex items-center gap-1 font-bold">
+            <Icon
+              icon={change > 0 ? "mdi:arrow-up" : "mdi:arrow-down"}
+              className={`text-sm ${change > 0 ? "text-green-600" : "text-red-600"}`}
+            />
+            <div
+              className={`text-xs ${change > 0 ? "text-green-600" : "text-red-600"}`}
+            >
+              {change > 0 ? "+" : ""}
+              {change}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
