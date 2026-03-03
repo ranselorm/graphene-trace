@@ -31,7 +31,7 @@ function ShellNavLink({ to, label }: { to: string; label: string }) {
 }
 const Sidebar = () => {
   return (
-    <aside className="hidden md:flex md:w-64 md:flex-col border-r border-gray-300 min-h-screen bg-white">
+    <aside className="hidden md:sticky md:top-0 md:flex md:h-screen md:w-64 md:flex-col border-r border-gray-300 bg-white">
       <div className="p-4">
         <div className="flex items-end cursor-pointer w-max">
           <Icon

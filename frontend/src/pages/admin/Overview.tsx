@@ -2,25 +2,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import MetricsCard from "@/components/admin/MetricsCard";
+import { ChartCard } from "@/components/charts/ChartCard";
 
-type Stat = {
-  label: string;
-  value: string;
-  hint?: string;
-};
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 type ActivityItem = {
   title: string;
   meta: string;
   tag?: "info" | "warning" | "critical";
 };
-
-const stats: Stat[] = [
-  { label: "Total users", value: "128", hint: "+6 this week" },
-  { label: "Patients", value: "96", hint: "+4 this week" },
-  { label: "Clinicians", value: "12", hint: "+1 this week" },
-  { label: "Active alerts", value: "7", hint: "2 critical" },
-];
 
 const activity: ActivityItem[] = [
   {
@@ -43,6 +43,22 @@ const activity: ActivityItem[] = [
     meta: "patient_006 • 2 hours ago",
     tag: "warning",
   },
+];
+
+// Mock chart data
+const alertsTrend = [
+  { day: "Mon", alerts: 3 },
+  { day: "Tue", alerts: 5 },
+  { day: "Wed", alerts: 2 },
+  { day: "Thu", alerts: 7 },
+  { day: "Fri", alerts: 4 },
+  { day: "Sat", alerts: 6 },
+  { day: "Sun", alerts: 3 },
+];
+
+const assignmentCoverage = [
+  { name: "Assigned", patients: 82 },
+  { name: "Unassigned", patients: 14 },
 ];
 
 function Tag({ tag }: { tag?: ActivityItem["tag"] }) {
@@ -83,7 +99,80 @@ function Overview() {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ChartCard title="Alerts trend" subtitle="Alerts over the last 7 days">
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={alertsTrend}
+                margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fill: "var(--muted-foreground)" }}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fill: "var(--muted-foreground)" }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
+                    color: "var(--foreground)",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="alerts"
+                  stroke="var(--chart-1)"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+
+        <ChartCard
+          title="Assignment coverage"
+          subtitle="Patients assigned vs unassigned"
+        >
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={assignmentCoverage}
+                margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fill: "var(--muted-foreground)" }}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fill: "var(--muted-foreground)" }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
+                    color: "var(--foreground)",
+                  }}
+                />
+                <Bar
+                  dataKey="patients"
+                  fill="var(--chart-2)"
+                  radius={[6, 6, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+      </div>
+
+      {/* <div className="grid gap-4 lg:grid-cols-3">
         <Card className="bg-white border-zinc-800 lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base">Recent activity</CardTitle>
@@ -142,7 +231,7 @@ function Overview() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 }
