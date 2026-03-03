@@ -12,9 +12,9 @@ export function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="bg-card border-border">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">{title}</CardTitle>
+    <Card className="bg-card border-none shadow-none h-105">
+      <CardHeader className="pb-1">
+        <CardTitle className="text-zinc-900 font-medium">{title}</CardTitle>
         {subtitle ? (
           <div className="text-xs text-muted-foreground">{subtitle}</div>
         ) : null}

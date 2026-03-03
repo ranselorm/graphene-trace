@@ -1,13 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import MetricsCard from "@/components/admin/MetricsCard";
 import { ChartCard } from "@/components/charts/ChartCard";
+import { useState } from "react";
 
 import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -16,37 +16,8 @@ import {
   YAxis,
 } from "recharts";
 
-type ActivityItem = {
-  title: string;
-  meta: string;
-  tag?: "info" | "warning" | "critical";
-};
-
-const activity: ActivityItem[] = [
-  {
-    title: "New patient account created",
-    meta: "patient_024 • 10 mins ago",
-    tag: "info",
-  },
-  {
-    title: "Clinician assigned to patient",
-    meta: "clinician_003 → patient_024 • 25 mins ago",
-    tag: "info",
-  },
-  {
-    title: "High pressure alert triggered",
-    meta: "patient_011 • 1 hour ago",
-    tag: "critical",
-  },
-  {
-    title: "Alert marked reviewed",
-    meta: "patient_006 • 2 hours ago",
-    tag: "warning",
-  },
-];
-
 // Mock chart data
-const alertsTrend = [
+const alertsTrend7Days = [
   { day: "Mon", alerts: 3 },
   { day: "Tue", alerts: 5 },
   { day: "Wed", alerts: 2 },
@@ -56,20 +27,27 @@ const alertsTrend = [
   { day: "Sun", alerts: 3 },
 ];
 
-const assignmentCoverage = [
-  { name: "Assigned", patients: 82 },
-  { name: "Unassigned", patients: 14 },
+const alertsTrendMonth = [
+  { day: "W1", alerts: 14 },
+  { day: "W2", alerts: 18 },
+  { day: "W3", alerts: 8 },
+  { day: "W4", alerts: 24 },
 ];
 
-function Tag({ tag }: { tag?: ActivityItem["tag"] }) {
-  if (!tag) return null;
-
-  if (tag === "critical") return <Badge variant="destructive">Critical</Badge>;
-  if (tag === "warning") return <Badge variant="secondary">Warning</Badge>;
-  return <Badge variant="outline">Info</Badge>;
-}
+const assignmentCoverage = [
+  { name: "Assigned", patients: 4 },
+  { name: "Unassigned", patients: 1 },
+];
 
 function Overview() {
+  const [alertsRange, setAlertsRange] = useState<"7d" | "1m">("7d");
+  const alertsTrend =
+    alertsRange === "7d" ? alertsTrend7Days : alertsTrendMonth;
+  const alertsSubtitle =
+    alertsRange === "7d"
+      ? "Alerts over the last 7 days"
+      : "Alerts over the last month";
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -92,20 +70,38 @@ function Overview() {
           icon="healthicons:doctor"
         />
         <MetricsCard
-          label="Active Alerts"
-          value={15}
-          change={4}
+          label="Alerts"
+          value={45}
+          change={12}
           icon="fluent:alert-24-regular"
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Alerts trend" subtitle="Alerts over the last 7 days">
-          <div className="h-64 w-full">
+      {/* Charts */}
+      <div className="grid gap-4 lg:grid-cols-2 items-start">
+        <ChartCard title="Alerts trend" subtitle={alertsSubtitle}>
+          <div className="mb-3 -mt-4 flex justify-end gap-2">
+            <Button
+              size="xs"
+              variant={alertsRange === "7d" ? "default" : "outline"}
+              onClick={() => setAlertsRange("7d")}
+            >
+              7D
+            </Button>
+            <Button
+              size="xs"
+              variant={alertsRange === "1m" ? "default" : "outline"}
+              onClick={() => setAlertsRange("1m")}
+            >
+              1M
+            </Button>
+          </div>
+          <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={alertsTrend}
                 margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+                accessibilityLayer={false}
               >
                 <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
                 <XAxis
@@ -120,14 +116,16 @@ function Overview() {
                   contentStyle={{
                     backgroundColor: "var(--card)",
                     border: "1px solid var(--border)",
+                    borderRadius: "8%",
                     color: "var(--foreground)",
                   }}
+                  itemStyle={{ color: "#2e5090" }}
                 />
                 <Line
                   type="monotone"
                   dataKey="alerts"
-                  stroke="var(--chart-1)"
-                  strokeWidth={2}
+                  stroke="#2e5090"
+                  strokeWidth={1}
                   dot={false}
                 />
               </LineChart>
@@ -139,11 +137,12 @@ function Overview() {
           title="Assignment coverage"
           subtitle="Patients assigned vs unassigned"
         >
-          <div className="h-64 w-full">
+          <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={assignmentCoverage}
                 margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+                accessibilityLayer={false}
               >
                 <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
                 <XAxis
@@ -161,11 +160,10 @@ function Overview() {
                     color: "var(--foreground)",
                   }}
                 />
-                <Bar
-                  dataKey="patients"
-                  fill="var(--chart-2)"
-                  radius={[6, 6, 0, 0]}
-                />
+                <Bar dataKey="patients" radius={[6, 6, 0, 0]}>
+                  <Cell fill="#2e5090" />
+                  <Cell fill="#DBEAFE" />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -190,7 +188,17 @@ function Overview() {
                     </div>
                     <div className="mt-1 text-xs text-zinc-500">{a.meta}</div>
                   </div>
-                  <Tag tag={a.tag} />
+                  <Badge
+                    variant={
+                      a.tag === "success"
+                        ? "default"
+                        : a.tag === "warning"
+                          ? "secondary"
+                          : "outline"
+                    }
+                  >
+                    {a.tag}
+                  </Badge>
                 </div>
               </div>
             ))}

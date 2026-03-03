@@ -12,7 +12,7 @@ const MetricsCard = ({ label, value, change, icon }: MetricsCardProps) => {
   return (
     <Card className="bg-white shadow-none border-none py-3">
       <CardHeader className="flex flex-row items-center space-y-0 gap-x-4">
-        <div className="p-2 bg-blue-100 rounded-full">
+        <div className="p-2 bg-secondary rounded-full">
           <Icon icon={icon} className="text-xl text-primary" />
         </div>
         <CardTitle className=" font-medium">{label}</CardTitle>
