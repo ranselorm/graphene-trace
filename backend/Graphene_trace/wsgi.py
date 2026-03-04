@@ -1,5 +1,5 @@
 """
-WSGI config for Graphene_trace project.
+WSGI config for graphene_trace project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
