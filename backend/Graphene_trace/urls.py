@@ -1,5 +1,5 @@
 """
-URL configuration for Graphene_trace project.
+URL configuration for graphene_trace project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/6.0/topics/http/urls/
@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.http import JsonResponse
-from django.urls import path
+from django.urls import path, include
 
 
 def health(request):
@@ -26,5 +26,6 @@ def health(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health/", health),
+    path("api/auth/", include('accounts.urls')),
     path("", health),
 ]

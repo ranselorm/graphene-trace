@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "../lib/auth";
+import { useAuth } from "@/context/AuthContext";
 
 // shadcn/ui
 import { Button } from "@/components/ui/button";

@@ -1,5 +1,5 @@
 """
-ASGI config for Graphene_trace project.
+ASGI config for graphene_trace project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 

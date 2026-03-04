@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 
 class SensorFrame(models.Model):
-    patient = models.ForeignKey("patients.Patient", on_delete=models.CASCADE, related_name="sensor_frames")
+    patient = models.ForeignKey("patients.PatientProfile", on_delete=models.CASCADE, related_name="sensor_frames")
     timestamp = models.DateTimeField()
     data = models.JSONField()
 
