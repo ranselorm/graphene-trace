@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useLogin } from "@/hooks/useLogin";
+import { toast } from "sonner";
+import axios from "axios";
 
 function roleHome(role: "patient" | "clinician" | "admin") {
   if (role === "patient") return "/patient/dashboard";
@@ -54,6 +56,16 @@ export function LoginPage() {
   //hooks
   const loginMutation = useLogin();
 
+  function getErrorMessage(error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const data: any = error.response?.data;
+      return (
+        data?.error || data?.detail || error.message || "Something went wrong!"
+      );
+    }
+    if (error instanceof Error) return error.message;
+    return "Something went wrong!";
+  }
   //password validation
   const passwordValidation = useMemo(() => {
     return {
@@ -126,12 +138,32 @@ export function LoginPage() {
           setIsAuthenticated(true);
           // Persist to localStorage
           localStorage.setItem("authSession", JSON.stringify(data));
+          toast.success("Login successful", {
+            position: "top-center",
+            style: {
+              background: "#2e5090",
+              color: "#ffffff",
+              border: "0.5px solid #dbeafe",
+            },
+          });
 
           //navigate user
           setTimeout(() => {
             console.log(data, "LOGIN SUCCESSFUL");
             navigate("/admin", { replace: true });
           }, 1000);
+        },
+        onError: (error) => {
+          const msg = getErrorMessage(error);
+          toast.error(msg, {
+            position: "top-center",
+            style: {
+              background: "#FF5C5C",
+              color: "#ffffff",
+              border: "0.5px solid #FF8A8A",
+            },
+          });
+          console.log("LOGIN ERROR:", error);
         },
       },
     );
