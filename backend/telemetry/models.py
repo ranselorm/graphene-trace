@@ -3,17 +3,24 @@ from django.db import models
 # Create your models here.
 
 class SensorFrame(models.Model):
-    patient = models.ForeignKey("patients.Patient", on_delete=models.CASCADE, related_name="sensor_frames")
-    timestamp = models.DateTimeField()
-    data = models.JSONField()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
+    id = models.BigAutoField(primary_key=True)  # bigint primary key
+    session_id = models.IntegerField()  # Foreign key could be added if you have a Session model
+    timestamp = models.DateTimeField()  # timestamp
+    
+    # Data storage
+    raw_matrix_data = models.JSONField()
+    
+    # Pre-calculated metrics
+    peak_pressure_index = models.IntegerField(null=True, blank=True)
+    contact_area_percentage = models.FloatField(null=True, blank=True)
+    risk_score = models.FloatField(null=True, blank=True)
+    
+    # Smart alert logic
+    is_flagged_alert = models.BooleanField(default=False)
+    
     class Meta:
-        indexes = [
-            models.Index(fields=["patient", "-timestamp"]),
-        ]
-
+        db_table = "pressure_frames"
+        
+    
     def __str__(self):
-        return f"SensorFrame(patient_id={self.patient_id}, ts={self.timestamp})"
+        return f"PressureFrame {self.id} (Session {self.session_id})"

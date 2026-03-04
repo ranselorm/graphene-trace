@@ -88,23 +88,19 @@ function safeParseSession(raw: string | null): Session | null {
 }
 
 async function mockLogin(input: LoginInput): Promise<Session> {
-  const match = MOCK_USERS.find(
-    (u) =>
-      u.email.toLowerCase() === input.email.toLowerCase() &&
-      u.password === input.password,
-  );
+  const res = await fetch("http://127.0.0.1:8000/api/login/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
 
-  // Small delay so loading states feel real in UI
-  await new Promise((r) => setTimeout(r, 350));
-
-  if (!match) {
-    throw new Error("Invalid email or password.");
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Login failed");
   }
 
-  return {
-    user: match.user,
-    token: `mock-token-${match.user.id}-${Date.now()}`,
-  };
+  const data = await res.json();
+  return data; // Should match {token, user}
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
