@@ -12,7 +12,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #16714e;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -25,9 +25,9 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #0cafff;
+  --primary: #2e5090;
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: #0077c0;
+  --secondary: #dbeafe;
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
@@ -152,10 +152,33 @@
   }
 
   :root {
-    /* Change to your preferred HSL color */
     --ring: #0cafff;
   }
   .dark {
     --ring: #0cafff;
   }
+}
+
+/* Suppress Recharts focus outline on click */
+.recharts-surface {
+  outline: none !important;
+}
+
+.recharts-surface:focus,
+.recharts-surface:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Suppress focus on recharts elements */
+.recharts-bar,
+.recharts-bar:focus,
+.recharts-rectangle {
+  outline: none !important;
+}
+
+/* Suppress any SVG focus rings */
+svg:focus,
+svg:focus-visible {
+  outline: none !important;
 }

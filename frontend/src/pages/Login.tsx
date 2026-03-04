@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../lib/auth";
+import { useAuth } from "@/context/authContext";
 import { Icon } from "@iconify/react";
 
 // shadcn/ui
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useLogin } from "@/hooks/useLogin";
 
 function roleHome(role: "patient" | "clinician" | "admin") {
   if (role === "patient") return "/patient/dashboard";
@@ -37,17 +38,21 @@ function PasswordRequirement({ met, text }: { met: boolean; text: string }) {
 }
 
 export function LoginPage() {
-  const { login, session, isAuthenticated } = useAuth();
+  const { session, isAuthenticated, setSession, setIsAuthenticated } =
+    useAuth();
+
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = (location.state as any)?.from as string | undefined;
-
-  const [email, setEmail] = useState("patient@demo.com");
-  const [password, setPassword] = useState("@Password123");
+  const [email, setEmail] = useState("admin@example.com");
+  const [password, setPassword] = useState("admin123");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  //hooks
+  const loginMutation = useLogin();
 
   //password validation
   const passwordValidation = useMemo(() => {
@@ -66,13 +71,13 @@ export function LoginPage() {
     () => [
       { label: "Patient", email: "patient@demo.com" },
       { label: "Clinician", email: "clinician@demo.com" },
-      { label: "Admin", email: "admin@demo.com" },
+      { label: "Admin", email: "admin@example.com" },
     ],
     [],
   );
 
   // If someone is already logged in and reaches /login, push them out to their portal.
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated && session) {
       navigate(roleHome(session.user.role), { replace: true });
     }
@@ -84,7 +89,8 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      await login({ email, password });
+      // await login({ email, password });
+      loginMutation.mutate({ email, password });
 
       // After login, go where they intended (if it matches their role) or to role home.
       // For now, keep it simple: always go to role home (prevents confusing cross-role deep links).
@@ -104,6 +110,34 @@ export function LoginPage() {
       setLoading(false);
     }
   };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      // toast.error("Please enter both email and password");
+      alert("Please enter both email and password");
+      return;
+    }
+    loginMutation.mutate(
+      { email, password },
+      {
+        onSuccess: (data) => {
+          setSession(data);
+          setIsAuthenticated(true);
+          // Persist to localStorage
+          localStorage.setItem("authSession", JSON.stringify(data));
+
+          //navigate user
+          setTimeout(() => {
+            console.log(data, "LOGIN SUCCESSFUL");
+            navigate("/admin", { replace: true });
+          }, 1000);
+        },
+      },
+    );
+  };
+
+  // if (loginMutation.isPending) return <p>Login In. Please wait</p>;
 
   return (
     <div className="min-h-screen w-screen text-zinc-800 flex items-center justify-center p-6">
@@ -136,7 +170,7 @@ export function LoginPage() {
                     </Alert>
                   )}
 
-                  <form onSubmit={onSubmit} className="space-y-4">
+                  <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email" className="text-zinc-800">
                         Email
@@ -210,9 +244,11 @@ export function LoginPage() {
                     <Button
                       type="submit"
                       className="w-full cursor-pointer bg-zinc-800 hover:bg-zinc-900"
-                      disabled={loading || !isPasswordValid}
+                      // disabled={loading || !isPasswordValid}
+                      disabled={loading}
+                      // onClick={handleLogin}
                     >
-                      {loading ? "Signing in..." : "Sign in"}
+                      {loading ? "Login in..." : "Login in"}
                     </Button>
                   </form>
 
@@ -229,7 +265,7 @@ export function LoginPage() {
                           className="border border-zinc-300 cursor-pointer bg-transparent text-xs text-zinc-800 shadow-none"
                           onClick={() => {
                             setEmail(d.email);
-                            setPassword("@Password123");
+                            setPassword("admin123");
                             setError(null);
                           }}
                         >
@@ -252,11 +288,9 @@ export function LoginPage() {
                 </CardFooter>
               </Card>
             </div>
-            {/* <div></div> */}
-            {/* <p className="bg-red-900">hello</p> */}
             <div className="flex items-center gap-x-1">
               <Icon icon="solar:copyright-line-duotone" />
-              <p className="text-xs">Graphen Trace 2026</p>
+              <p className="text-xs">Graphene Trace 2026</p>
             </div>
           </div>
 
