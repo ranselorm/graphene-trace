@@ -1,11 +1,24 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/authContext";
 
 // shadcn/ui
 import Sidebar from "@/components/admin/Sidebar";
 import Navbar from "@/components/Navbar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 export function AdminLayout() {
+  const { session, logout } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="flex">
@@ -29,7 +42,7 @@ export function AdminLayout() {
                     >
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="bg-zinc-900 text-zinc-200">
-                          {(user?.name ?? "A")
+                          {(session?.name ?? "A")
                             .split(" ")
                             .slice(0, 2)
                             .map((s: any) => s[0])
@@ -39,10 +52,10 @@ export function AdminLayout() {
                       </Avatar>
                       <div className="ml-2 hidden sm:block text-left">
                         <div className="text-sm leading-tight">
-                          {user?.name ?? "Admin"}
+                          {session?.name ?? "Admin"}
                         </div>
                         <div className="text-xs text-zinc-400 leading-tight">
-                          {user?.email ?? ""}
+                          {session?.email ?? ""}
                         </div>
                       </div>
                     </Button>

@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/authContext";
 
 // shadcn/ui
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,7 @@ export function PatientLayout() {
                           {(user?.name ?? "P")
                             .split(" ")
                             .slice(0, 2)
-                            .map((s) => s[0])
+                            .map((s: any) => s[0])
                             .join("")
                             .toUpperCase()}
                         </AvatarFallback>
