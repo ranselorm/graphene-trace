@@ -95,3 +95,29 @@ def get_all_users(request):
 
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def upsert_user(request):
+    """
+    Create new user if 'id' not provided, else update existing user
+    """
+    user_id = request.data.get('id', None)
+
+    if user_id:
+        # Update existing user
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+        serializer = UserSerializer(user, data=request.data, partial=True)  # partial=True allows updating only provided fields
+    else:
+        # Create new user
+        serializer = UserSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    else:
+        return Response(serializer.errors, status=400)
