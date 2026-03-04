@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Eye, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -39,6 +41,20 @@ import {
   dummyAvatar,
   initials,
 } from "@/constants";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 
 function roleLabel(role: UserRole) {
   if (role === "admin") return "Admin";
@@ -240,6 +256,7 @@ export default function UsersPage() {
     "all",
   );
   const [search, setSearch] = React.useState("");
+  const [isAddUserOpen, setIsAddUserOpen] = useState(true);
 
   const filtered = React.useMemo(() => {
     return users.filter((u) => {
@@ -288,10 +305,11 @@ export default function UsersPage() {
           setStatusFilter("all");
         }}
         onApplyFilters={() => {}}
-        onAddUser={() => console.log("open create user modal")}
+        // onAddUser={() => console.log("open create user modal")}
+        onAddUser={() => setIsAddUserOpen(true)}
       />
 
-      <Card className="border-none bg-white shadow-none">
+      <Card className="border-none bg-white shadow-none mt-4">
         <div className="w-full overflow-x-auto">
           <Table>
             <TableHeader>
@@ -430,6 +448,56 @@ export default function UsersPage() {
           </div>
         </div>
       </Card>
+      <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+        {/* <DialogTrigger>Open</DialogTrigger> */}
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add user and assign a role</DialogTitle>
+          </DialogHeader>
+
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="fieldgroup-email">Full Name</FieldLabel>
+              <Input
+                id="fieldgroup-full_name"
+                type="email"
+                placeholder="Ran Selorm"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="fieldgroup-email">Email</FieldLabel>
+              <Input
+                id="fieldgroup-email"
+                type="email"
+                placeholder="ranselorm@example.com"
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="fieldgroup-email">Roles</FieldLabel>
+              <Select>
+                <SelectTrigger className="w-full max-w-48">
+                  <SelectValue placeholder="Assign a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Roles</SelectLabel>
+                    <SelectItem value="apple">Admin</SelectItem>
+                    <SelectItem value="banana">Clinician</SelectItem>
+                    <SelectItem value="blueberry">Patient</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field orientation="horizontal">
+              <Button type="reset" variant="outline">
+                Cancel
+              </Button>
+              <Button type="submit">Submit</Button>
+            </Field>
+          </FieldGroup>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
