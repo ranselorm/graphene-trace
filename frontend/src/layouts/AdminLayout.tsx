@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function AdminLayout() {
-  const { session, logout } = useAuth();
+  // const { session, logout } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -27,7 +27,7 @@ export function AdminLayout() {
 
         {/* Main */}
         <div className="flex-1 min-w-0">
-          <header className="sticky top-0 z-10 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur">
+          {/* <header className="sticky top-0 z-10 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="md:hidden">
                 <div className="text-sm text-zinc-400">Admin Portal</div>
@@ -87,7 +87,8 @@ export function AdminLayout() {
                 </DropdownMenu>
               </div>
             </div>
-          </header>
+          </header> */}
+          <Navbar />
 
           <main className="p-4 md:p-6">
             <Outlet />

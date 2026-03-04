@@ -9,7 +9,7 @@ import {
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/context/authContext";
 import { routesConfig } from "@/routesConfig";
 
 const Navbar = () => {
@@ -32,7 +32,7 @@ const Navbar = () => {
   console.log(title);
 
   return (
-    <header className="sticky top-0 z-10 border-b border-gray-300 bg-white backdrop-blur">
+    <header className="sticky top-0 z-10 border-b border-gray-300 bg-white">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="">
           <div className="text-sm text-black font-black">{title}</div>
@@ -43,11 +43,11 @@ const Navbar = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-10 px-2 hover:bg-gray-200">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-zinc-900 text-zinc-200">
+                  <AvatarFallback className="bg-blue-500 text-white">
                     {(user?.name ?? "A")
                       .split(" ")
                       .slice(0, 2)
-                      .map((s) => s[0])
+                      .map((s: any) => s[0])
                       .join("")
                       .toUpperCase()}
                   </AvatarFallback>
