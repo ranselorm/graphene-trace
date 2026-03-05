@@ -44,17 +44,10 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 
 function roleLabel(role: UserRole) {
   if (role === "admin") return "Admin";
@@ -164,7 +157,7 @@ export function UsersToolbar({
             </Button>
           </PopoverTrigger>
 
-          <PopoverContent align="end" className="w-[340px] p-0">
+          <PopoverContent align="end" className="w-85 p-0">
             <div className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
