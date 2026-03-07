@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from rest_framework.authentication import SessionAuthentication
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,9 +20,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 
+# Disable CSRF for SessionAuthentication in development
+# REMOVE THIS IN PRODUCTION!
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # To not perform the csrf check previously happening
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        'rest_framework.authentication.SessionAuthentication',
+        'Graphene_trace.settings.CsrfExemptSessionAuthentication',
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         'rest_framework.permissions.IsAuthenticated',
@@ -76,15 +83,23 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173' #make sure this goes to ur computers local host for react
+    'http://localhost:5173', #make sure this goes to ur computers local host for react
+    'https://hoppscotch.io',
+    'chrome-extension://amknoiejhlmhancpahfcfcfhllgkpbld', # Hoppscotch extension
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
+    'https://hoppscotch.io',
 ]
-ROOT_URLCONF = 'graphene_trace.urls'
+
+# For development/testing - allow CSRF from any origin
+# REMOVE THIS IN PRODUCTION!
+CSRF_COOKIE_SAMESITE = None
+CSRF_COOKIE_SECURE = False
+ROOT_URLCONF = 'Graphene_trace.urls'
 
 TEMPLATES = [
     {
@@ -101,7 +116,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'graphene_trace.wsgi.application'
+WSGI_APPLICATION = 'Graphene_trace.wsgi.application'
 
 
 # Database
