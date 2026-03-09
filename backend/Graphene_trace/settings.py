@@ -115,7 +115,7 @@ DATABASES = { #connects the django to your database, make sure the details match
         'USER': 'graphene_user',         
         'PASSWORD': 'Password123', 
         'HOST': 'localhost',          
-        'PORT': '5433',               # default PostgreSQL port
+        'PORT': '5432',               # default PostgreSQL port
     }
 }
 
