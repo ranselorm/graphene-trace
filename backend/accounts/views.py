@@ -1,19 +1,18 @@
-from django.contrib.auth import authenticate, login, logout
-from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from .models import User
-from .serializers import UserSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@csrf_exempt  # Temporarily disable CSRF for testing
 def login_view(request):
     """
-    Admin login endpoint
+    Admin login endpoint with JWT tokens
     Expects: { "email": "admin@example.com", "password": "password123" }
+    Returns: JWT access and refresh tokens with user info
     """
     email = request.data.get('email')
     password = request.data.get('password')
@@ -35,11 +34,13 @@ def login_view(request):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Log the user in
-        login(request, user)
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
         
         return Response({
             'message': 'Login successful',
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
             'user': {
                 'id': user.id,
                 'email': user.email,
@@ -58,9 +59,9 @@ def login_view(request):
 @permission_classes([IsAuthenticated])
 def logout_view(request):
     """
-    Logout endpoint
+    Logout endpoint - with JWT, client just discards the token
+    This endpoint can be used to blacklist the refresh token if needed
     """
-    logout(request)
     return Response(
         {'message': 'Logout successful'},
         status=status.HTTP_200_OK
@@ -71,7 +72,7 @@ def logout_view(request):
 @permission_classes([IsAuthenticated])
 def current_user(request):
     """
-    Get current logged-in user info
+    Get current logged-in user info from JWT token
     """
     user = request.user
     return Response({
@@ -81,19 +82,22 @@ def current_user(request):
         'role': user.role
     }, status=status.HTTP_200_OK)
 
-    
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_all_users(request):
+    """
+    Get all users - requires authentication
+    """
+    from .models import User
     users = User.objects.all()
-
-    role = request.query_params.get('role')
-    if role:
-        users = users.filter(role=role)
+    users_data = [{
+        'id': user.id,
+        'email': user.email,
+        'full_name': user.full_name,
+        'role': user.role,
+        'username': user.username
+    } for user in users]
     
-    # Optional: order by date joined descending
-    users = users.order_by('-date_joined')
-
-    serializer = UserSerializer(users, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(users_data, status=status.HTTP_200_OK)
