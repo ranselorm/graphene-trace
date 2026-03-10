@@ -8,18 +8,16 @@ async function fetchDetails(token: string, alertId: string | number) {
   const { data } = await axios.get(`${API_URL}/${alertId}/`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-
   return data;
 }
 
-export function useDetails(alertId: string | number) {
+export function useDetails(alertId?: string | number, enabled: boolean = true) {
   const { accessToken } = useAuth();
 
   return useQuery({
-    queryKey: ["details", alertId],
+    queryKey: ["alert-details", alertId],
     queryFn: () => fetchDetails(accessToken!, alertId!),
-    // only run once you have both
-    enabled: !!accessToken && !!alertId,
+    enabled: enabled && !!accessToken && !!alertId,
     staleTime: 5 * 60 * 1000,
   });
 }

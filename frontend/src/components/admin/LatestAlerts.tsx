@@ -29,7 +29,6 @@ export function LatestAlertsTable({
     : Array.isArray(items?.alerts)
       ? items.alerts
       : [];
-  console.log(safeItems);
 
   return (
     <Card className="bg-white border-none shadow-none">
@@ -97,7 +96,10 @@ export function LatestAlertsTable({
 
               {safeItems?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-zinc-500">
+                  <TableCell
+                    colSpan={6}
+                    className="py-8 text-zinc-500 flex items-center justify-center"
+                  >
                     No alerts yet.
                   </TableCell>
                 </TableRow>
