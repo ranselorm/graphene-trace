@@ -1,11 +1,13 @@
 # Admin Dashboard Endpoints - Complete Implementation
 
 ## Overview
+
 This document describes all admin dashboard endpoints available for the frontend team.
 
 ## Status: ✅ ALL ENDPOINTS IMPLEMENTED
 
 ### Authentication Endpoints:
+
 - **Authentication** (JWT-based)
   - `POST /api/auth/login/` - Admin login with JWT tokens
   - `POST /api/auth/logout/` - Logout
@@ -67,7 +69,7 @@ backend/
 ├── accounts/
 │   ├── views.py          ✅ Authentication endpoints
 │   └── urls.py           ✅ Auth routes
-└── Graphene_trace/
+└── graphene_trace/
     └── urls.py           ✅ Main URL configuration
 ```
 
@@ -80,6 +82,7 @@ backend/
 **Purpose:** CRUD operations for patient management
 
 **Implementation:**
+
 ```python
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -95,7 +98,7 @@ class PatientViewSet(viewsets.ModelViewSet):
     """
     queryset = PatientProfile.objects.all().select_related('patient', 'clinician')
     permission_classes = [IsAuthenticated]
-    
+
     def list(self, request):
         """List all patients with their details"""
         patients = self.get_queryset()
@@ -113,9 +116,9 @@ class PatientViewSet(viewsets.ModelViewSet):
             } if p.clinician else None,
             'created_at': p.patient.created_at
         } for p in patients]
-        
+
         return Response(data, status=status.HTTP_200_OK)
-    
+
     def retrieve(self, request, pk=None):
         """Get single patient details"""
         try:
@@ -137,7 +140,7 @@ class PatientViewSet(viewsets.ModelViewSet):
             return Response(data, status=status.HTTP_200_OK)
         except PatientProfile.DoesNotExist:
             return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     def create(self, request):
         """Create new patient with user account"""
         email = request.data.get('email')
@@ -148,13 +151,13 @@ class PatientViewSet(viewsets.ModelViewSet):
         risk_category = request.data.get('risk_category', 'low')
         medical_notes = request.data.get('medical_notes', '')
         clinician_id = request.data.get('clinician_id')
-        
+
         if not email or not password or not username:
             return Response(
                 {'error': 'Email, password, and username are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             # Create user account
             user = User.objects.create_user(
@@ -164,7 +167,7 @@ class PatientViewSet(viewsets.ModelViewSet):
                 full_name=full_name,
                 role='patient'
             )
-            
+
             # Create patient profile
             clinician = None
             if clinician_id:
@@ -172,7 +175,7 @@ class PatientViewSet(viewsets.ModelViewSet):
                     clinician = User.objects.get(id=clinician_id, role='clinician')
                 except User.DoesNotExist:
                     pass
-            
+
             PatientProfile.objects.create(
                 patient=user,
                 date_of_birth=date_of_birth,
@@ -180,7 +183,7 @@ class PatientViewSet(viewsets.ModelViewSet):
                 medical_notes=medical_notes,
                 clinician=clinician
             )
-            
+
             return Response({
                 'message': 'Patient created successfully',
                 'patient': {
@@ -189,23 +192,23 @@ class PatientViewSet(viewsets.ModelViewSet):
                     'full_name': user.full_name
                 }
             }, status=status.HTTP_201_CREATED)
-            
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def partial_update(self, request, pk=None):
         """Update patient information"""
         try:
             patient_profile = PatientProfile.objects.get(patient_id=pk)
             user = patient_profile.patient
-            
+
             # Update user fields
             if 'full_name' in request.data:
                 user.full_name = request.data['full_name']
             if 'email' in request.data:
                 user.email = request.data['email']
             user.save()
-            
+
             # Update patient profile fields
             if 'date_of_birth' in request.data:
                 patient_profile.date_of_birth = request.data['date_of_birth']
@@ -222,26 +225,26 @@ class PatientViewSet(viewsets.ModelViewSet):
                         return Response({'error': 'Clinician not found'}, status=status.HTTP_404_NOT_FOUND)
                 else:
                     patient_profile.clinician = None
-            
+
             patient_profile.save()
-            
+
             return Response({'message': 'Patient updated successfully'}, status=status.HTTP_200_OK)
-            
+
         except PatientProfile.DoesNotExist:
             return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     def destroy(self, request, pk=None):
         """Delete patient (and associated user account)"""
         try:
             patient_profile = PatientProfile.objects.get(patient_id=pk)
             user = patient_profile.patient
             user.delete()  # Cascade deletes patient profile
-            
+
             return Response({'message': 'Patient deleted successfully'}, status=status.HTTP_200_OK)
-            
+
         except PatientProfile.DoesNotExist:
             return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     @action(detail=False, methods=['get'])
     def unassigned(self, request):
         """Get all patients without assigned clinicians"""
@@ -252,7 +255,7 @@ class PatientViewSet(viewsets.ModelViewSet):
             'email': p.patient.email,
             'risk_category': p.risk_category
         } for p in patients]
-        
+
         return Response(data, status=status.HTTP_200_OK)
 ```
 
@@ -263,6 +266,7 @@ class PatientViewSet(viewsets.ModelViewSet):
 **Purpose:** CRUD operations for clinician management and patient assignments
 
 **Implementation:**
+
 ```python
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -279,7 +283,7 @@ class ClinicianViewSet(viewsets.ModelViewSet):
     """
     queryset = Clinician.objects.all().select_related('user')
     permission_classes = [IsAuthenticated]
-    
+
     def list(self, request):
         """List all clinicians with their details"""
         clinicians = self.get_queryset()
@@ -292,15 +296,15 @@ class ClinicianViewSet(viewsets.ModelViewSet):
             'assigned_patients_count': PatientProfile.objects.filter(clinician=c.user).count(),
             'created_at': c.user.created_at
         } for c in clinicians]
-        
+
         return Response(data, status=status.HTTP_200_OK)
-    
+
     def retrieve(self, request, pk=None):
         """Get single clinician details with assigned patients"""
         try:
             clinician = Clinician.objects.select_related('user').get(user_id=pk)
             assigned_patients = PatientProfile.objects.filter(clinician=clinician.user).select_related('patient')
-            
+
             data = {
                 'id': clinician.user.id,
                 'full_name': clinician.user.full_name,
@@ -319,7 +323,7 @@ class ClinicianViewSet(viewsets.ModelViewSet):
             return Response(data, status=status.HTTP_200_OK)
         except Clinician.DoesNotExist:
             return Response({'error': 'Clinician not found'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     def create(self, request):
         """Create new clinician with user account"""
         email = request.data.get('email')
@@ -327,13 +331,13 @@ class ClinicianViewSet(viewsets.ModelViewSet):
         full_name = request.data.get('full_name')
         username = request.data.get('username')
         specialty = request.data.get('specialty', '')
-        
+
         if not email or not password or not username:
             return Response(
                 {'error': 'Email, password, and username are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             # Create user account
             user = User.objects.create_user(
@@ -343,10 +347,10 @@ class ClinicianViewSet(viewsets.ModelViewSet):
                 full_name=full_name,
                 role='clinician'
             )
-            
+
             # Create clinician profile
             Clinician.objects.create(user=user, specialty=specialty)
-            
+
             return Response({
                 'message': 'Clinician created successfully',
                 'clinician': {
@@ -356,92 +360,92 @@ class ClinicianViewSet(viewsets.ModelViewSet):
                     'specialty': specialty
                 }
             }, status=status.HTTP_201_CREATED)
-            
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def partial_update(self, request, pk=None):
         """Update clinician information"""
         try:
             clinician = Clinician.objects.get(user_id=pk)
             user = clinician.user
-            
+
             # Update user fields
             if 'full_name' in request.data:
                 user.full_name = request.data['full_name']
             if 'email' in request.data:
                 user.email = request.data['email']
             user.save()
-            
+
             # Update clinician profile fields
             if 'specialty' in request.data:
                 clinician.specialty = request.data['specialty']
             clinician.save()
-            
+
             return Response({'message': 'Clinician updated successfully'}, status=status.HTTP_200_OK)
-            
+
         except Clinician.DoesNotExist:
             return Response({'error': 'Clinician not found'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     def destroy(self, request, pk=None):
         """Delete clinician (and associated user account)"""
         try:
             clinician = Clinician.objects.get(user_id=pk)
             user = clinician.user
-            
+
             # Unassign all patients first
             PatientProfile.objects.filter(clinician=user).update(clinician=None)
-            
+
             user.delete()  # Cascade deletes clinician profile
-            
+
             return Response({'message': 'Clinician deleted successfully'}, status=status.HTTP_200_OK)
-            
+
         except Clinician.DoesNotExist:
             return Response({'error': 'Clinician not found'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     @action(detail=True, methods=['post'])
     def assign_patient(self, request, pk=None):
         """Assign a patient to this clinician"""
         try:
             clinician = Clinician.objects.get(user_id=pk)
             patient_id = request.data.get('patient_id')
-            
+
             if not patient_id:
                 return Response({'error': 'patient_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
             try:
                 patient_profile = PatientProfile.objects.get(patient_id=patient_id)
                 patient_profile.clinician = clinician.user
                 patient_profile.save()
-                
+
                 return Response({'message': 'Patient assigned successfully'}, status=status.HTTP_200_OK)
-                
+
             except PatientProfile.DoesNotExist:
                 return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
-                
+
         except Clinician.DoesNotExist:
             return Response({'error': 'Clinician not found'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     @action(detail=True, methods=['post'])
     def unassign_patient(self, request, pk=None):
         """Unassign a patient from this clinician"""
         try:
             clinician = Clinician.objects.get(user_id=pk)
             patient_id = request.data.get('patient_id')
-            
+
             if not patient_id:
                 return Response({'error': 'patient_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
             try:
                 patient_profile = PatientProfile.objects.get(patient_id=patient_id, clinician=clinician.user)
                 patient_profile.clinician = None
                 patient_profile.save()
-                
+
                 return Response({'message': 'Patient unassigned successfully'}, status=status.HTTP_200_OK)
-                
+
             except PatientProfile.DoesNotExist:
                 return Response({'error': 'Patient not found or not assigned to this clinician'}, status=status.HTTP_404_NOT_FOUND)
-                
+
         except Clinician.DoesNotExist:
             return Response({'error': 'Clinician not found'}, status=status.HTTP_404_NOT_FOUND)
 ```
@@ -453,23 +457,27 @@ class ClinicianViewSet(viewsets.ModelViewSet):
 Once the views are implemented, test with:
 
 ### 1. Login and Get Token
+
 ```bash
 POST /api/auth/login/
 Body: {"email": "admin@example.com", "password": "admin123"}
 ```
 
 ### 2. Use Token in Headers
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 ### 3. Test Dashboard Stats
+
 ```bash
 GET /api/dashboard/stats/
 GET /api/dashboard/alerts-trend/
 ```
 
 ### 4. Test Patients
+
 ```bash
 GET /api/patients/
 POST /api/patients/
@@ -478,6 +486,7 @@ PATCH /api/patients/1/
 ```
 
 ### 5. Test Clinicians
+
 ```bash
 GET /api/clinicians/
 POST /api/clinicians/

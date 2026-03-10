@@ -123,7 +123,7 @@ CSRF_TRUSTED_ORIGINS = [
 # REMOVE THIS IN PRODUCTION!
 CSRF_COOKIE_SAMESITE = None
 CSRF_COOKIE_SECURE = False
-ROOT_URLCONF = 'Graphene_trace.urls'
+ROOT_URLCONF = 'graphene_trace.urls'
 
 TEMPLATES = [
     {
@@ -140,7 +140,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'Graphene_trace.wsgi.application'
+WSGI_APPLICATION = 'graphene_trace.wsgi.application'
 
 
 # Database

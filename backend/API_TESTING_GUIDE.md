@@ -1,6 +1,7 @@
 # API Testing Guide - Graphene Trace
 
 ## Overview
+
 This guide explains how all the endpoints work and how to test them.
 
 ## How the API is Structured
@@ -10,7 +11,7 @@ This guide explains how all the endpoints work and how to test them.
 ```
 Request: http://localhost:8000/api/auth/login/
          ↓
-Main URLs (Graphene_trace/urls.py)
+Main URLs (graphene_trace/urls.py)
          ↓
 Routes to: accounts.urls (because of /api/auth/)
          ↓
@@ -23,7 +24,7 @@ Returns: JSON response with JWT tokens
 
 ### Main URL Configuration
 
-**File:** `backend/Graphene_trace/urls.py`
+**File:** `backend/graphene_trace/urls.py`
 
 This is the **root router** that directs all incoming requests:
 
@@ -44,7 +45,9 @@ urlpatterns = [
 Each app has its own `urls.py` that defines specific endpoints:
 
 #### 1. Authentication (`accounts/urls.py`)
+
 Uses **function-based views**:
+
 ```python
 urlpatterns = [
     path('login/', views.login_view),           # POST /api/auth/login/
@@ -56,13 +59,16 @@ urlpatterns = [
 ```
 
 #### 2. Alerts, Patients, Clinicians
+
 Use **ViewSet with Router** (auto-generates CRUD endpoints):
+
 ```python
 router = DefaultRouter()
 router.register(r'', AlertViewSet, basename='alert')
 ```
 
 This automatically creates:
+
 - `GET /api/alerts/` - List all
 - `POST /api/alerts/` - Create new
 - `GET /api/alerts/{id}/` - Get one
@@ -71,7 +77,9 @@ This automatically creates:
 - Plus custom `@action` endpoints
 
 #### 3. Dashboard (`api/urls.py`)
+
 Uses **function-based views**:
+
 ```python
 urlpatterns = [
     path('stats/', views.dashboard_stats),      # GET /api/dashboard/stats/
@@ -86,6 +94,7 @@ urlpatterns = [
 ### Authentication Endpoints
 
 #### 1. Login
+
 ```bash
 POST /api/auth/login/
 Content-Type: application/json
@@ -111,6 +120,7 @@ Response:
 ```
 
 #### 2. Get Current User
+
 ```bash
 GET /api/auth/me/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -125,6 +135,7 @@ Response:
 ```
 
 #### 3. Get All Users
+
 ```bash
 GET /api/auth/get_all_users/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -142,6 +153,7 @@ Response:
 ```
 
 #### 4. Refresh Token
+
 ```bash
 POST /api/auth/token/refresh/
 Content-Type: application/json
@@ -162,6 +174,7 @@ Response:
 ### Dashboard Endpoints
 
 #### 1. Dashboard Stats
+
 ```bash
 GET /api/dashboard/stats/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -191,6 +204,7 @@ Response:
 ```
 
 #### 2. Alerts Trend
+
 ```bash
 GET /api/dashboard/alerts-trend/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -207,6 +221,7 @@ Response:
 ### Alert Endpoints
 
 #### 1. List All Alerts
+
 ```bash
 GET /api/alerts/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -235,6 +250,7 @@ Response:
 ```
 
 #### 2. Create Alert
+
 ```bash
 POST /api/alerts/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -261,12 +277,14 @@ Response:
 ```
 
 #### 3. Get Single Alert
+
 ```bash
 GET /api/alerts/1/
 Authorization: Bearer <ACCESS_TOKEN>
 ```
 
 #### 4. Update Alert
+
 ```bash
 PATCH /api/alerts/1/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -280,12 +298,14 @@ Body:
 ```
 
 #### 5. Delete Alert
+
 ```bash
 DELETE /api/alerts/1/
 Authorization: Bearer <ACCESS_TOKEN>
 ```
 
 #### 6. Mark as Reviewed
+
 ```bash
 PATCH /api/alerts/1/mark_reviewed/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -297,6 +317,7 @@ Response:
 ```
 
 #### 7. Mark as Resolved
+
 ```bash
 PATCH /api/alerts/1/mark_resolved/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -308,6 +329,7 @@ Response:
 ```
 
 #### 8. Get Latest Alerts
+
 ```bash
 GET /api/alerts/latest/?limit=10
 Authorization: Bearer <ACCESS_TOKEN>
@@ -318,6 +340,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 ### Patient Endpoints
 
 #### 1. List All Patients
+
 ```bash
 GET /api/patients/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -342,6 +365,7 @@ Response:
 ```
 
 #### 2. Create Patient
+
 ```bash
 POST /api/patients/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -371,12 +395,14 @@ Response:
 ```
 
 #### 3. Get Patient Details
+
 ```bash
 GET /api/patients/2/
 Authorization: Bearer <ACCESS_TOKEN>
 ```
 
 #### 4. Update Patient
+
 ```bash
 PATCH /api/patients/2/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -396,6 +422,7 @@ Response:
 ```
 
 #### 5. Delete Patient
+
 ```bash
 DELETE /api/patients/2/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -407,6 +434,7 @@ Response:
 ```
 
 #### 6. Get Unassigned Patients
+
 ```bash
 GET /api/patients/unassigned/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -427,6 +455,7 @@ Response:
 ### Clinician Endpoints
 
 #### 1. List All Clinicians
+
 ```bash
 GET /api/clinicians/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -446,6 +475,7 @@ Response:
 ```
 
 #### 2. Create Clinician
+
 ```bash
 POST /api/clinicians/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -473,6 +503,7 @@ Response:
 ```
 
 #### 3. Get Clinician Details
+
 ```bash
 GET /api/clinicians/3/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -498,6 +529,7 @@ Response:
 ```
 
 #### 4. Update Clinician
+
 ```bash
 PATCH /api/clinicians/3/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -516,6 +548,7 @@ Response:
 ```
 
 #### 5. Delete Clinician
+
 ```bash
 DELETE /api/clinicians/3/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -527,6 +560,7 @@ Response:
 ```
 
 #### 6. Assign Patient to Clinician
+
 ```bash
 POST /api/clinicians/3/assign_patient/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -544,6 +578,7 @@ Response:
 ```
 
 #### 7. Unassign Patient from Clinician
+
 ```bash
 POST /api/clinicians/3/unassign_patient/
 Authorization: Bearer <ACCESS_TOKEN>
@@ -565,6 +600,7 @@ Response:
 ## Testing with Hoppscotch
 
 ### Step 1: Login
+
 1. Open Hoppscotch
 2. Set method to `POST`
 3. URL: `http://localhost:8000/api/auth/login/`
@@ -580,6 +616,7 @@ Response:
 7. Copy the `access` token from the response
 
 ### Step 2: Test Other Endpoints
+
 1. For any protected endpoint
 2. Add Header: `Authorization: Bearer <paste_access_token_here>`
 3. Set the appropriate method (GET, POST, PATCH, DELETE)
@@ -591,18 +628,22 @@ Response:
 ## Common Errors and Solutions
 
 ### 1. 403 Forbidden
+
 - **Cause:** Missing or invalid JWT token
 - **Solution:** Make sure you include `Authorization: Bearer <token>` header
 
 ### 2. 404 Not Found
+
 - **Cause:** Wrong URL or missing ID in path
 - **Solution:** Check the URL matches the patterns above
 
 ### 3. 400 Bad Request
+
 - **Cause:** Missing required fields or invalid data
 - **Solution:** Check the request body matches the expected format
 
 ### 4. 401 Unauthorized
+
 - **Cause:** Token expired
 - **Solution:** Login again to get a new token, or use refresh token endpoint
 
@@ -615,22 +656,22 @@ ViewSets are Django REST Framework's way of automatically creating CRUD endpoint
 ```python
 class PatientViewSet(viewsets.ModelViewSet):
     queryset = PatientProfile.objects.all()
-    
+
     def list(self, request):        # GET /api/patients/
         # Return all patients
-    
+
     def retrieve(self, request, pk):# GET /api/patients/{pk}/
         # Return one patient
-    
+
     def create(self, request):      # POST /api/patients/
         # Create new patient
-    
+
     def partial_update(self, request, pk):  # PATCH /api/patients/{pk}/
         # Update patient
-    
+
     def destroy(self, request, pk): # DELETE /api/patients/{pk}/
         # Delete patient
-    
+
     @action(detail=False, methods=['get'])
     def unassigned(self, request):  # GET /api/patients/unassigned/
         # Custom endpoint
@@ -643,6 +684,7 @@ The `DefaultRouter` automatically creates all these URLs for you!
 ## Summary
 
 Your API has 4 main sections:
+
 1. **Authentication** - Login, get user info, manage tokens
 2. **Dashboard** - Aggregated stats and trends
 3. **Alerts** - Manage patient alerts

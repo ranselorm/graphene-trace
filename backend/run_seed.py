@@ -6,7 +6,7 @@ Usage: python run_seed.py
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Graphene_trace.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'graphene_trace.settings')
 django.setup()
 
 # Now run the seed script
