@@ -17,6 +17,7 @@ import { useAlerts } from "@/hooks/useAlerts";
 
 import { useDetails } from "@/hooks/useAlertDetails";
 import { useMarkResolved } from "@/hooks/useMarkResolved";
+import { toast } from "sonner";
 
 function Overview() {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -51,6 +52,14 @@ function Overview() {
     if (!selectedAlertId) return;
     resolveAlert(selectedAlertId, {
       onSuccess: () => {
+        toast.success("Alert successfully resolved", {
+          position: "top-center",
+          style: {
+            background: "#2e5090",
+            color: "#ffffff",
+            border: "0.5px solid #dbeafe",
+          },
+        });
         setSheetOpen(false);
         setSelectedAlertId(null);
       },
