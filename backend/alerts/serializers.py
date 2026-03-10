@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Alert
-from django.utils.timesince import timesince
 
 
 class AlertSerializer(serializers.ModelSerializer):
@@ -11,7 +10,6 @@ class AlertSerializer(serializers.ModelSerializer):
     # These are computed fields that don't exist in the model
     patient_name = serializers.SerializerMethodField()
     patient_email = serializers.SerializerMethodField()
-    time_ago = serializers.SerializerMethodField()
     
     class Meta:
         model = Alert
@@ -26,7 +24,6 @@ class AlertSerializer(serializers.ModelSerializer):
             'status',
             'created_at',
             'updated_at',
-            'time_ago'
         ]
         read_only_fields = ['created_at', 'updated_at']
     
@@ -42,6 +39,6 @@ class AlertSerializer(serializers.ModelSerializer):
             return obj.patient.patient.email
         return "Unknown"
     
-    def get_time_ago(self, obj):
-        """Convert timestamp to human-readable format like '2 minutes ago'"""
-        return timesince(obj.created_at) + " ago"
+    # def get_time_ago(self, obj):
+    #     """Convert timestamp to human-readable format like '2 minutes ago'"""
+    #     return timesince(obj.created_at) + " ago"
