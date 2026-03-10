@@ -1,3 +1,4 @@
+import { useAuth } from "@/context/authContext";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 // import { RootState } from "@/store/store";
@@ -16,23 +17,22 @@ const fetchAlerts = async (
       page_size,
     },
   });
-  const alerts = response ?? [];
+  const alerts = response?.data ?? [];
   console.log(alerts, "ALERTS");
   //   const count = response?.data?.data?.count ?? 0;
   return { alerts };
 };
 
-export const useTransactions = (page: number, limit: number) => {
-  //   const token = useSelector((state: RootState) => state.user.token);
-  const token = "jjkdjdjkdkdkd";
+export const useAlerts = (page?: number, limit?: number) => {
+  const { accessToken } = useAuth();
 
   return useQuery({
-    queryKey: ["alerts", token, page, limit],
+    queryKey: ["alerts", accessToken, page, limit],
 
     queryFn: async () => {
-      const { alerts } = await fetchAlerts(token!, page, limit);
+      const { alerts } = await fetchAlerts(accessToken!, page, limit);
       return { alerts };
     },
-    enabled: !!token,
+    enabled: !!accessToken,
   });
 };

@@ -13,6 +13,7 @@ import {
   latestAlerts,
   type LatestAlert as AlertDetails,
 } from "@/constants";
+import { useAlerts } from "@/hooks/useAlerts";
 
 function Overview() {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -47,6 +48,9 @@ function Overview() {
   const handleResolve = () => {
     setSelected((prev) => (prev ? { ...prev, status: "resolved" } : prev));
   };
+
+  //hooks
+  const { data } = useAlerts();
 
   return (
     <div>
@@ -86,7 +90,7 @@ function Overview() {
           <AssignmentCoverageChart data={assignmentCoverage} />
         </div>
         {/* <RecentActivityComponent items={recentActivities} maxHeight={320} /> */}
-        <LatestAlertsTable items={latestAlerts} onView={handleView} />
+        <LatestAlertsTable items={data} onView={handleView} />
 
         <AlertDetailsSheet
           open={sheetOpen}
