@@ -13,40 +13,57 @@ import {
   latestAlerts,
   type LatestAlert as AlertDetails,
 } from "@/constants";
+import { useAlerts } from "@/hooks/useAlerts";
+
+import { useDetails } from "@/hooks/useAlertDetails";
+import { useMarkResolved } from "@/hooks/useMarkResolved";
 
 function Overview() {
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [selected, setSelected] = useState<AlertDetails | null>(null);
+  const [selectedAlertId, setSelectedAlertId] = useState<number | null>(null);
 
   const handleView = (alertId: number) => {
-    const alert = latestAlerts.find((x) => x.id === alertId);
-    if (!alert) {
-      console.log("alert not found");
-      return;
-    }
-
-    console.log(alert, "ALERT");
-
-    // Build the details object. Later this comes from the backend.
-    setSelected({
-      id: alert.id,
-      patientName: alert.patientName,
-      alertType: alert.alertType,
-      label: alert.label,
-      severity: alert.severity,
-      status: alert.status,
-      timestamp: alert.timestamp,
-      clinicianName: "Dr. Sarah Johnson",
-      sensorFrameId: 1842,
-      notes: "Auto generated alert. Review the frame and advise the patient.",
-    });
-
+    setSelectedAlertId(alertId);
     setSheetOpen(true);
   };
 
+  const { data: alertDetails } = useDetails(
+    selectedAlertId ?? undefined,
+    sheetOpen,
+  );
+
+  const selected = alertDetails
+    ? {
+        id: alertDetails.id,
+        patientName: alertDetails.patient_name,
+        alertType: alertDetails.alert_type,
+        label: alertDetails.alert_type,
+        severity: alertDetails.severity,
+        status: alertDetails.status,
+        timestamp: alertDetails.created_at,
+        clinicianName: alertDetails.clinician_name ?? "Unassigned",
+        sensorFrameId: alertDetails.sensor_frame ?? null,
+        notes: alertDetails.notes ?? "",
+      }
+    : null;
+
   const handleResolve = () => {
-    setSelected((prev) => (prev ? { ...prev, status: "resolved" } : prev));
+    if (!selectedAlertId) return;
+    resolveAlert(selectedAlertId, {
+      onSuccess: () => {
+        setSheetOpen(false);
+        setSelectedAlertId(null);
+      },
+    });
   };
+
+  //hooks
+  const { data } = useAlerts();
+  const { mutate: resolveAlert, isPending: isResolving } = useMarkResolved();
+
+  if (isResolving) {
+    console.log("resolving");
+  }
 
   return (
     <div>
@@ -86,13 +103,14 @@ function Overview() {
           <AssignmentCoverageChart data={assignmentCoverage} />
         </div>
         {/* <RecentActivityComponent items={recentActivities} maxHeight={320} /> */}
-        <LatestAlertsTable items={latestAlerts} onView={handleView} />
+        <LatestAlertsTable items={data} onView={handleView} />
 
         <AlertDetailsSheet
           open={sheetOpen}
           onOpenChange={setSheetOpen}
           alert={selected}
           onResolve={handleResolve}
+          // isResolving={isResolving}
         />
       </div>
     </div>
