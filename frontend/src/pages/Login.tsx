@@ -38,8 +38,13 @@ function PasswordRequirement({ met, text }: { met: boolean; text: string }) {
 }
 
 export function LoginPage() {
-  const { session, isAuthenticated, setSession, setIsAuthenticated } =
-    useAuth();
+  const {
+    session,
+    isAuthenticated,
+    setSession,
+    setIsAuthenticated,
+    setAccessToken,
+  } = useAuth();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -124,8 +129,11 @@ export function LoginPage() {
         onSuccess: (data) => {
           setSession(data);
           setIsAuthenticated(true);
+          setAccessToken(data.access);
+
           // Persist to localStorage
           localStorage.setItem("authSession", JSON.stringify(data));
+          localStorage.setItem("accessToken", data.access);
 
           //navigate user
           setTimeout(() => {

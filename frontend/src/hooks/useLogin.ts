@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 
-const loginUrl = "http://localhost:8000/api/auth/login/";
+const loginUrl = `${import.meta.env.VITE_BASE_URL}/auth/login/`;
 
 export const useLogin = () => {
   return useMutation({

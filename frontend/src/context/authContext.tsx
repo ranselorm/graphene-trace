@@ -4,10 +4,11 @@ export type Role = "patient" | "clinician" | "admin";
 type AuthContextType = {
   session: any;
   isAuthenticated: boolean;
-  //   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   setSession: (session: any) => void;
   setIsAuthenticated: (authenticated: boolean) => void;
+  accessToken: string | null;
+  setAccessToken: (token: string | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -15,14 +16,20 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   // Load from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem("authSession");
+    const storedToken = localStorage.getItem("accessToken");
+
     if (stored) {
       const parsed = JSON.parse(stored);
       setSession(parsed);
       setIsAuthenticated(true);
+    }
+    if (storedToken) {
+      setAccessToken(storedToken);
     }
   }, []);
 
@@ -37,7 +44,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setSession(null);
     setIsAuthenticated(false);
+    setAccessToken(null);
     localStorage.removeItem("authSession");
+    localStorage.removeItem("accessToken");
   };
 
   return (
@@ -45,10 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         session,
         isAuthenticated,
-        // login,
+        accessToken,
         logout,
         setSession,
         setIsAuthenticated,
+        setAccessToken,
       }}
     >
       {children}
