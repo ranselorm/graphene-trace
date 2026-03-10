@@ -30,7 +30,6 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "graphene_trace.settings.CsrfExemptSessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -124,7 +123,7 @@ CSRF_TRUSTED_ORIGINS = [
 # REMOVE THIS IN PRODUCTION!
 CSRF_COOKIE_SAMESITE = None
 CSRF_COOKIE_SECURE = False
-ROOT_URLCONF = 'graphene_trace.urls'
+ROOT_URLCONF = 'Graphene_trace.urls'
 
 TEMPLATES = [
     {
@@ -141,7 +140,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'graphene_trace.wsgi.application'
+WSGI_APPLICATION = 'Graphene_trace.wsgi.application'
 
 
 # Database
