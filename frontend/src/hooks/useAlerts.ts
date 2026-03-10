@@ -1,11 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { useSelector } from "react-redux";
 // import { RootState } from "@/store/store";
 
 const API_URL = `${import.meta.env.VITE_BASE_URL}/alerts/`;
 
-const fetchAlerts = async (token: string, page: number, page_size: number) => {
+const fetchAlerts = async (
+  token: string,
+  page?: number,
+  page_size?: number,
+) => {
   const response = await axios.get(API_URL, {
     headers: { Authorization: `Bearer ${token}` },
     params: {
@@ -14,6 +17,7 @@ const fetchAlerts = async (token: string, page: number, page_size: number) => {
     },
   });
   const alerts = response ?? [];
+  console.log(alerts, "ALERTS");
   //   const count = response?.data?.data?.count ?? 0;
   return { alerts };
 };
