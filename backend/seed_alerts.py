@@ -17,20 +17,18 @@ User = apps.get_model("accounts", "User")
 
 latestAlerts = [
   {
-    "patientName": "John Doe",
+    "patientName": "Amir Butti",
     "alertType": "high_pressure",
     "label": "High pressure",
     "severity": "high",
     "status": "new",
-    "timestamp": "2 mins ago",
   },
   {
-    "patientName": "Anna Lee",
+    "patientName": "Oliver Pulley",
     "alertType": "low_contact_area",
     "label": "Low contact area",
     "severity": "medium",
     "status": "reviewed",
-    "timestamp": "25 mins ago",
   },
   {
     "patientName": "Mike Wilson",
@@ -38,15 +36,20 @@ latestAlerts = [
     "label": "High pressure",
     "severity": "high",
     "status": "new",
-    "timestamp": "1 hour ago",
   },
   {
-    "patientName": "Jane Smith",
+    "patientName": "Oshioze Van",
     "alertType": "low_contact_area",
     "label": "Low contact area",
     "severity": "low",
     "status": "resolved",
-    "timestamp": "2 hours ago",
+  },
+  {
+    "patientName": "Ran Selorm",
+    "alertType": "low_contact_area",
+    "label": "Low contact area",
+    "severity": "low",
+    "status": "resolved",
   },
 ]
 
@@ -93,7 +96,6 @@ def get_or_create_profile(user):
     return profile
 
 def get_sensor_frame_model():
-    # Alert.sensor_frame -> telemetry.SensorFrame
     f = Alert._meta.get_field("sensor_frame")
     return f.remote_field.model
 
@@ -102,7 +104,6 @@ def create_min_sensor_frame(SensorFrame, profile, at_dt):
     now = timezone.now()
     kwargs = {}
 
-    # Link to patient/profile if such a field exists on SensorFrame
     if "patient" in fields:
         kwargs["patient"] = profile
     elif "patient_profile" in fields:
@@ -110,7 +111,6 @@ def create_min_sensor_frame(SensorFrame, profile, at_dt):
     elif "profile" in fields:
         kwargs["profile"] = profile
 
-    # Required fields discovered from your errors
     if "timestamp" in fields:
         kwargs["timestamp"] = at_dt or now
 
@@ -124,13 +124,11 @@ def create_min_sensor_frame(SensorFrame, profile, at_dt):
             "note": "seeded sensor frame",
         }
 
-    # Optional audit fields if present
     if "created_at" in fields:
         kwargs["created_at"] = now
     if "updated_at" in fields:
         kwargs["updated_at"] = now
 
-    # If data is not a JSONField, store it as a string
     try:
         return SensorFrame.objects.create(**kwargs)
     except Exception:
@@ -143,8 +141,10 @@ print("Alert.sensor_frame points to:", SensorFrame._meta.label)
 
 created = 0
 
-for item in latestAlerts:
-    at_dt = parse_relative_timestamp(item["timestamp"])
+for i, item in enumerate(latestAlerts):
+    # No timestamp required in the data. We generate one.
+    # This makes alerts appear as different "recent" items.
+    at_dt = parse_relative_timestamp(item.get("timestamp", f"{(i + 1) * 7} mins ago"))
 
     user = get_or_create_patient_user(item["patientName"])
     profile = get_or_create_profile(user)
