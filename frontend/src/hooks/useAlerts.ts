@@ -3,7 +3,7 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 // import { RootState } from "@/store/store";
 
-const API_URL = `${import.meta.env.VITE_BASE_URL}/transactions/admin`;
+const API_URL = `${import.meta.env.VITE_BASE_URL}/alerts/`;
 
 const fetchAlerts = async (token: string, page: number, page_size: number) => {
   const response = await axios.get(API_URL, {
