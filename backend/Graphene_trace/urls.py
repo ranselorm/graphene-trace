@@ -28,5 +28,6 @@ urlpatterns = [
     path("api/health/", health),
     path("api/auth/", include('accounts.urls')),
     path("api/alerts/", include('alerts.urls')),
+    path("api/", include("comments.urls")),
     path("", health),
 ]
