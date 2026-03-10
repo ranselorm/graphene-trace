@@ -16,6 +16,7 @@ import {
 import { useAlerts } from "@/hooks/useAlerts";
 
 import { useDetails } from "@/hooks/useAlertDetails";
+import { useMarkResolved } from "@/hooks/useMarkResolved";
 
 function Overview() {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -47,11 +48,22 @@ function Overview() {
     : null;
 
   const handleResolve = () => {
-    // handleResolve logic would typically update the alert details, not the ID
+    if (!selectedAlertId) return;
+    resolveAlert(selectedAlertId, {
+      onSuccess: () => {
+        setSheetOpen(false);
+        setSelectedAlertId(null);
+      },
+    });
   };
 
   //hooks
   const { data } = useAlerts();
+  const { mutate: resolveAlert, isPending: isResolving } = useMarkResolved();
+
+  if (isResolving) {
+    console.log("resolving");
+  }
 
   return (
     <div>
@@ -98,6 +110,7 @@ function Overview() {
           onOpenChange={setSheetOpen}
           alert={selected}
           onResolve={handleResolve}
+          // isResolving={isResolving}
         />
       </div>
     </div>
