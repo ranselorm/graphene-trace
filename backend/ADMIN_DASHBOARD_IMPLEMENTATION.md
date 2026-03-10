@@ -1,11 +1,11 @@
-# Admin Dashboard Endpoints Implementation Guide
+# Admin Dashboard Endpoints - Complete Implementation
 
 ## Overview
-This document describes the admin dashboard endpoints that need to be implemented for the frontend team.
+This document describes all admin dashboard endpoints available for the frontend team.
 
-## Current Status
+## Status: ✅ ALL ENDPOINTS IMPLEMENTED
 
-### ✅ Working Endpoints:
+### Authentication Endpoints:
 - **Authentication** (JWT-based)
   - `POST /api/auth/login/` - Admin login with JWT tokens
   - `POST /api/auth/logout/` - Logout
@@ -29,38 +29,57 @@ This document describes the admin dashboard endpoints that need to be implemente
   - `GET /api/dashboard/stats/` - Aggregated dashboard statistics
   - `GET /api/dashboard/alerts-trend/` - Alerts trend for charts
 
-### ⚠️ Needs Implementation:
-- **Patients Management** - URLs created, views need to be added
-- **Clinicians Management** - URLs created, views need to be added
+- **Patients Management**
+  - `GET /api/patients/` - List all patients
+  - `POST /api/patients/` - Create patient
+  - `GET /api/patients/{id}/` - Get patient details
+  - `PATCH /api/patients/{id}/` - Update patient
+  - `DELETE /api/patients/{id}/` - Delete patient
+  - `GET /api/patients/unassigned/` - Get unassigned patients
+
+- **Clinicians Management**
+  - `GET /api/clinicians/` - List all clinicians
+  - `POST /api/clinicians/` - Create clinician
+  - `GET /api/clinicians/{id}/` - Get clinician details
+  - `PATCH /api/clinicians/{id}/` - Update clinician
+  - `DELETE /api/clinicians/{id}/` - Delete clinician
+  - `POST /api/clinicians/{id}/assign_patient/` - Assign patient
+  - `POST /api/clinicians/{id}/unassign_patient/` - Unassign patient
 
 ---
 
-## File Structure Created
+## File Structure
 
 ```
 backend/
 ├── api/
-│   ├── views.py          ✅ WORKING - Dashboard stats
-│   └── urls.py           ✅ WORKING
+│   ├── views.py          ✅ Dashboard stats endpoints
+│   └── urls.py           ✅ API routes
 ├── patients/
-│   ├── views.py          ❌ EMPTY - Needs implementation
-│   └── urls.py           ✅ Created
+│   ├── views.py          ✅ Patient CRUD endpoints
+│   └── urls.py           ✅ Patient routes
 ├── clinicians/
-│   ├── views.py          ❌ EMPTY - Needs implementation
-│   └── urls.py           ✅ Created
+│   ├── views.py          ✅ Clinician CRUD endpoints
+│   └── urls.py           ✅ Clinician routes
+├── alerts/
+│   ├── views.py          ✅ Alert management endpoints
+│   └── urls.py           ✅ Alert routes
+├── accounts/
+│   ├── views.py          ✅ Authentication endpoints
+│   └── urls.py           ✅ Auth routes
 └── Graphene_trace/
-    └── urls.py           ✅ Updated with new routes
+    └── urls.py           ✅ Main URL configuration
 ```
 
 ---
 
-## Implementation Needed
+## Implementation Details
 
 ### 1. Patients Management (`backend/patients/views.py`)
 
 **Purpose:** CRUD operations for patient management
 
-**Required Code:**
+**Implementation:**
 ```python
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -237,21 +256,13 @@ class PatientViewSet(viewsets.ModelViewSet):
         return Response(data, status=status.HTTP_200_OK)
 ```
 
-**Endpoints Created:**
-- `GET /api/patients/` - List all patients
-- `POST /api/patients/` - Create patient
-- `GET /api/patients/{id}/` - Get patient details
-- `PATCH /api/patients/{id}/` - Update patient
-- `DELETE /api/patients/{id}/` - Delete patient
-- `GET /api/patients/unassigned/` - Get unassigned patients
-
 ---
 
 ### 2. Clinicians Management (`backend/clinicians/views.py`)
 
 **Purpose:** CRUD operations for clinician management and patient assignments
 
-**Required Code:**
+**Implementation:**
 ```python
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -435,15 +446,6 @@ class ClinicianViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Clinician not found'}, status=status.HTTP_404_NOT_FOUND)
 ```
 
-**Endpoints Created:**
-- `GET /api/clinicians/` - List all clinicians
-- `POST /api/clinicians/` - Create clinician
-- `GET /api/clinicians/{id}/` - Get clinician details
-- `PATCH /api/clinicians/{id}/` - Update clinician
-- `DELETE /api/clinicians/{id}/` - Delete clinician
-- `POST /api/clinicians/{id}/assign_patient/` - Assign patient to clinician
-- `POST /api/clinicians/{id}/unassign_patient/` - Unassign patient from clinician
-
 ---
 
 ## Testing Instructions
@@ -484,20 +486,12 @@ GET /api/clinicians/1/
 
 ---
 
-## Known Issue
+## Authentication
 
-**File System Problem:** The `patients/views.py` and `clinicians/views.py` files are reverting to empty after being written. This might be caused by:
-1. IDE auto-save/auto-format
-2. File watcher or linter
-3. Git operations
+All endpoints require JWT authentication. Include the access token in the request header:
 
-**Solution:** Manually create these files with the code above, or investigate what's reverting the files.
+```
+Authorization: Bearer <access_token>
+```
 
----
-
-## Next Steps
-
-1. Fix the file system issue preventing views from persisting
-2. Add the code above to `patients/views.py` and `clinicians/views.py`
-3. Test all endpoints
-4. Merge this branch back to `amir_setup_branch`
+Get tokens by logging in at `POST /api/auth/login/` with admin credentials.
