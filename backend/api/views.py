@@ -8,6 +8,7 @@ from patients.models import PatientProfile
 from clinicians.models import Clinician
 from alerts.models import Alert
 from telemetry.models import SensorFrame
+from comments.models import Comment
 from django.utils import timezone
 from datetime import timedelta
 
@@ -44,6 +45,10 @@ def dashboard_stats(request):
     recent_alerts = Alert.objects.filter(created_at__gte=week_ago).count()
     recent_sensor_data = SensorFrame.objects.filter(created_at__gte=week_ago).count()
     
+    # Comments statistics
+    total_comments = Comment.objects.count()
+    recent_comments = Comment.objects.filter(created_at__gte=week_ago).count()
+    
     return Response({
         'users': {
             'total': total_users,
@@ -72,7 +77,12 @@ def dashboard_stats(request):
         },
         'recent_activity': {
             'alerts_last_7_days': recent_alerts,
-            'sensor_data_last_7_days': recent_sensor_data
+            'sensor_data_last_7_days': recent_sensor_data,
+            'comments_last_7_days': recent_comments
+        },
+        'comments': {
+            'total': total_comments,
+            'recent': recent_comments
         }
     }, status=status.HTTP_200_OK)
 
