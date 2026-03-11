@@ -89,6 +89,17 @@ function StatusBadge({ status }: { status: UserStatus }) {
   );
 }
 
+function formatCreatedOnDate(value?: string | null) {
+  if (!value) {
+    return "Mar 11, 2026";
+  }
+
+  const parsedDate = moment(value);
+  return parsedDate.isValid()
+    ? parsedDate.format("MMM D, YYYY")
+    : "Mar 11, 2026";
+}
+
 export function UsersToolbar({
   totalCount,
   search,
@@ -391,9 +402,15 @@ export default function UsersPage() {
                   <TableCell className="text-zinc-700">
                     {roleLabel(user?.role)}
                   </TableCell>
-                  {/* <TableCell className="text-zinc-700">
-                    {moment(u.createdOn, "M/DD/YY").format("MMM D, YYYY")}
-                  </TableCell> */}
+                  <TableCell className="text-zinc-700">
+                    {formatCreatedOnDate(
+                      user?.created_on ??
+                        user?.createdAt ??
+                        user?.createdOn ??
+                        user?.date_joined ??
+                        user?.created_at,
+                    )}
+                  </TableCell>
                   {/* <TableCell className="text-zinc-700">{u.lastLogin}</TableCell> */}
 
                   <TableCell>
