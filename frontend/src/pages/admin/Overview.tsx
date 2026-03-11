@@ -10,14 +10,13 @@ import {
   alertsTrend7Days,
   alertsTrendMonth,
   assignmentCoverage,
-  latestAlerts,
-  type LatestAlert as AlertDetails,
 } from "@/constants";
 import { useAlerts } from "@/hooks/useAlerts";
 
 import { useDetails } from "@/hooks/useAlertDetails";
 import { useMarkResolved } from "@/hooks/useMarkResolved";
 import { toast } from "sonner";
+import { useDasbboard } from "@/hooks/useDashboard";
 
 function Overview() {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -69,6 +68,9 @@ function Overview() {
   //hooks
   const { data } = useAlerts();
   const { mutate: resolveAlert, isPending: isResolving } = useMarkResolved();
+
+  const { data: overviewData } = useDasbboard();
+  console.log(overviewData);
 
   if (isResolving) {
     console.log("resolving");
