@@ -45,7 +45,8 @@ def login_view(request):
                 'id': user.id,
                 'email': user.email,
                 'full_name': user.full_name,
-                'role': user.role
+                'role': user.role,
+                'created_at': user.created_at,
             }
         }, status=status.HTTP_200_OK)
     else:
