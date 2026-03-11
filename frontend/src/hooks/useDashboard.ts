@@ -8,7 +8,7 @@ const fetchOverview = async (token: string) => {
   const response = await axios.get(API_URL, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return response.data?.data ?? [];
+  return response?.data;
 };
 
 export const useDasbboard = () => {

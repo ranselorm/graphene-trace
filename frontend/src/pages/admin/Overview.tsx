@@ -1,16 +1,14 @@
 import MetricsCard from "@/components/admin/MetricsCard";
 import { AlertsTrendChart } from "@/components/admin/AlertsTrendChart";
 import { AssignmentCoverageChart } from "@/components/admin/AssignmentCoverageChart";
+import { AlertSeverityChart } from "@/components/admin/AlertSeverityChart";
+import { AlertStatusChart } from "@/components/admin/AlertStatusChart";
 
 import { LatestAlertsTable } from "@/components/admin/LatestAlerts";
 import { AlertDetailsSheet } from "@/components/admin/AlertDetails";
 
 import { useState } from "react";
-import {
-  alertsTrend7Days,
-  alertsTrendMonth,
-  assignmentCoverage,
-} from "@/constants";
+import { alertsTrend7Days, alertsTrendMonth } from "@/constants";
 import { useAlerts } from "@/hooks/useAlerts";
 
 import { useDetails } from "@/hooks/useAlertDetails";
@@ -70,7 +68,7 @@ function Overview() {
   const { mutate: resolveAlert, isPending: isResolving } = useMarkResolved();
 
   const { data: overviewData } = useDasbboard();
-  console.log(overviewData);
+  console.log(overviewData?.users);
 
   if (isResolving) {
     console.log("resolving");
@@ -82,36 +80,62 @@ function Overview() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <MetricsCard
             label="Total Users"
-            value={7}
+            value={overviewData?.users?.total}
             change={2}
             icon="clarity:users-line"
           />
           <MetricsCard
             label="Patients"
-            value={5}
+            value={overviewData?.users?.patients}
             change={3}
             icon="material-symbols-light:recent-patient-outline-rounded"
           />
           <MetricsCard
             label="Clinician"
-            value={3}
+            value={overviewData?.users?.clinicians}
             change={-2}
             icon="healthicons:doctor"
           />
           <MetricsCard
             label="Alerts"
-            value={45}
+            value={overviewData?.alerts?.by_severity?.total}
             change={12}
             icon="fluent:alert-24-regular"
           />
         </div>
+
         {/* Charts */}
         <div className="grid gap-4 lg:grid-cols-2 items-start">
           <AlertsTrendChart
             data7Days={alertsTrend7Days}
             dataMonth={alertsTrendMonth}
           />
-          <AssignmentCoverageChart data={assignmentCoverage} />
+          <AssignmentCoverageChart
+            data={
+              overviewData?.assignments
+                ? [
+                    {
+                      name: "Assigned",
+                      patients: overviewData.assignments.assigned,
+                    },
+                    {
+                      name: "Unassigned",
+                      patients: overviewData.assignments.unassigned,
+                    },
+                  ]
+                : []
+            }
+          />
+          <AlertSeverityChart
+            high={overviewData?.alerts?.by_severity?.high ?? 0}
+            medium={overviewData?.alerts?.by_severity?.medium ?? 0}
+            low={overviewData?.alerts?.by_severity?.low ?? 0}
+          />
+          <AlertStatusChart
+            newCount={overviewData?.alerts?.by_status?.new ?? 0}
+            reviewed={overviewData?.alerts?.by_status?.reviewed ?? 0}
+            resolved={overviewData?.alerts?.by_status?.resolved ?? 0}
+          />
         </div>
         {/* <RecentActivityComponent items={recentActivities} maxHeight={320} /> */}
         <LatestAlertsTable items={data} onView={handleView} />
