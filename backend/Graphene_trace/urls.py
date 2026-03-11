@@ -28,12 +28,9 @@ urlpatterns = [
     path("api/health/", health),
     path("api/auth/", include('accounts.urls')),
     path("api/alerts/", include('alerts.urls')),
-<<<<<<< HEAD
     path("api/", include("comments.urls")),
-=======
     path("api/patients/", include('patients.urls')),
     path("api/clinicians/", include('clinicians.urls')),
     path("api/dashboard/", include('api.urls')),  # More specific path
->>>>>>> amir_setup_branch
     path("", health),
 ]

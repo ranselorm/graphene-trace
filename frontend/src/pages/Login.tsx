@@ -128,7 +128,7 @@ export function LoginPage() {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: any) => {
     e.preventDefault();
     if (!email || !password) {
       // toast.error("Please enter both email and password");
