@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Eye, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -44,26 +44,38 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { useUsers } from "@/hooks/useUsers";
 
 function roleLabel(role: UserRole) {
   if (role === "admin") return "Admin";
   if (role === "clinician") return "Clinician";
   return "Patient";
 }
+//USE THIS CODE LATER FOR DYNAMIC STATUS
+
+// function StatusBadge({ status }: { status: UserStatus }) {
+//   if (status === "active") {
+//     return (
+//       <Badge className="bg-emerald-100 text-emerald-900 hover:bg-emerald-100">
+//         Active
+//       </Badge>
+//     );
+//   }
+//   return (
+//     <Badge className="bg-rose-100 text-rose-900 hover:bg-rose-100">
+//       Disabled
+//     </Badge>
+//   );
+// }
+
+//DUMMY STATUS CODE. HARD CODED
 
 function StatusBadge({ status }: { status: UserStatus }) {
-  if (status === "active") {
+  if (status === true) {
     return (
       <Badge className="bg-emerald-100 text-emerald-900 hover:bg-emerald-100">
         Active
@@ -75,6 +87,17 @@ function StatusBadge({ status }: { status: UserStatus }) {
       Disabled
     </Badge>
   );
+}
+
+function formatCreatedOnDate(value?: string | null) {
+  if (!value) {
+    return "Mar 11, 2026";
+  }
+
+  const parsedDate = moment(value);
+  return parsedDate.isValid()
+    ? parsedDate.format("MMM D, YYYY")
+    : "Mar 11, 2026";
 }
 
 export function UsersToolbar({
@@ -164,7 +187,7 @@ export function UsersToolbar({
             </Button>
           </PopoverTrigger>
 
-          <PopoverContent align="end" className="w-[340px] p-0">
+          <PopoverContent align="end" className="w-85 p-0">
             <div className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -208,7 +231,7 @@ export function UsersToolbar({
                 <div className="space-y-2">
                   <div className="text-xs text-zinc-500">Status</div>
                   <Select
-                    value={statusFilter}
+                    // value={statusFilter}
                     onValueChange={(v) => onStatusChange(v as any)}
                   >
                     <SelectTrigger className="rounded-lg">
@@ -249,16 +272,14 @@ export function UsersToolbar({
 }
 
 export default function UsersPage() {
-  const [users, setUsers] = React.useState(seedUsers);
-  const [selected, setSelected] = React.useState<Record<number, boolean>>({});
-  const [roleFilter, setRoleFilter] = React.useState<UserRole | "all">("all");
-  const [statusFilter, setStatusFilter] = React.useState<UserStatus | "all">(
-    "all",
-  );
-  const [search, setSearch] = React.useState("");
-  const [isAddUserOpen, setIsAddUserOpen] = useState(true);
+  const [users, setUsers] = useState(seedUsers);
+  const [selected, setSelected] = useState<Record<number, boolean>>({});
+  const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<UserStatus | "all">("all");
+  const [search, setSearch] = useState("");
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
-  const filtered = React.useMemo(() => {
+  const filtered = useMemo(() => {
     return users.filter((u) => {
       const roleOk = roleFilter === "all" || u.role === roleFilter;
       const statusOk = statusFilter === "all" || u.status === statusFilter;
@@ -285,15 +306,22 @@ export default function UsersPage() {
   const toggleStatus = (id: number, checked: boolean) => {
     setUsers((prev) =>
       prev.map((u) =>
-        u.id === id ? { ...u, status: checked ? "active" : "disabled" } : u,
+        u.id === id ? { ...u, status: checked ? true : false } : u,
       ),
     );
   };
 
+  //dummy user status
+  const isActive = true;
+
+  //hooks
+  const { data } = useUsers();
+  console.log("users in component", data?.users);
+
   return (
     <div className="">
       <UsersToolbar
-        totalCount={filtered.length}
+        totalCount={data?.users.length}
         search={search}
         onSearchChange={setSearch}
         roleFilter={roleFilter}
@@ -327,20 +355,20 @@ export default function UsersPage() {
                 <TableHead>Email</TableHead>
                 <TableHead>Users</TableHead>
                 <TableHead>Created On</TableHead>
-                <TableHead>Last Login</TableHead>
+                {/* <TableHead>Last Login</TableHead> */}
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {filtered.map((u) => (
-                <TableRow key={u.id} className="hover:bg-zinc-50">
+              {data?.users.map((user: any) => (
+                <TableRow key={user?.id} className="hover:bg-zinc-50">
                   <TableCell>
                     <Checkbox
-                      checked={!!selected[u.id]}
-                      onCheckedChange={(v) => toggleOne(u.id, !!v)}
-                      aria-label={`Select ${u.name}`}
+                      checked={!!selected[user?.id]}
+                      onCheckedChange={(v) => toggleOne(user?.id, !!v)}
+                      aria-label={`Select ${user?.username}`}
                     />
                   </TableCell>
 
@@ -348,33 +376,45 @@ export default function UsersPage() {
                     <div className="flex items-center gap-3">
                       <Avatar className="8-7 w-8">
                         <AvatarImage
-                          src={u.avatarUrl ?? dummyAvatar(u.name, "initials")}
-                          alt={u.name}
+                          src={
+                            user?.avatarUrl ??
+                            dummyAvatar(
+                              user?.username ?? user?.name,
+                              "initials",
+                            )
+                          }
+                          alt={user?.username}
                         />
                         <AvatarFallback className="text-white text-xs">
-                          {initials(u.name)}
+                          {initials(user?.username)}
                         </AvatarFallback>
                       </Avatar>
 
                       <div className="leading-tight">
                         <div className="font-medium text-zinc-900">
-                          {u.name}
+                          {user?.username}
                         </div>
                       </div>
                     </div>
                   </TableCell>
 
-                  <TableCell className="text-zinc-700">{u.email}</TableCell>
+                  <TableCell className="text-zinc-700">{user?.email}</TableCell>
                   <TableCell className="text-zinc-700">
-                    {roleLabel(u.role)}
+                    {roleLabel(user?.role)}
                   </TableCell>
                   <TableCell className="text-zinc-700">
-                    {moment(u.createdOn, "M/DD/YY").format("MMM D, YYYY")}
+                    {formatCreatedOnDate(
+                      user?.created_on ??
+                        user?.createdAt ??
+                        user?.createdOn ??
+                        user?.date_joined ??
+                        user?.created_at,
+                    )}
                   </TableCell>
-                  <TableCell className="text-zinc-700">{u.lastLogin}</TableCell>
+                  {/* <TableCell className="text-zinc-700">{u.lastLogin}</TableCell> */}
 
                   <TableCell>
-                    <StatusBadge status={u.status} />
+                    <StatusBadge status={isActive} />
                   </TableCell>
 
                   <TableCell className="text-right">
@@ -394,10 +434,16 @@ export default function UsersPage() {
                         {/* <Pencil className="h-4 w-4 text-zinc-700" /> */}
                         <Icon icon="mage:edit" />
                       </Button>
-                      <Switch
+                      {/* <Switch
                         checked={u.status === "active"}
                         onCheckedChange={(checked) =>
                           toggleStatus(u.id, checked)
+                        }
+                      /> */}
+                      <Switch
+                        checked={isActive === true}
+                        onCheckedChange={(checked) =>
+                          toggleStatus(user?.id, checked)
                         }
                       />
                     </div>

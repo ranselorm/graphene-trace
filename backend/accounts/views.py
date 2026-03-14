@@ -45,7 +45,8 @@ def login_view(request):
                 'id': user.id,
                 'email': user.email,
                 'full_name': user.full_name,
-                'role': user.role
+                'role': user.role,
+                'created_at': user.created_at,
             }
         }, status=status.HTTP_200_OK)
     else:
@@ -79,7 +80,8 @@ def current_user(request):
         'id': user.id,
         'email': user.email,
         'full_name': user.full_name,
-        'role': user.role
+        'role': user.role,
+        'created_at': user.created_at,
     }, status=status.HTTP_200_OK)
 
 
@@ -97,7 +99,8 @@ def get_all_users(request):
         'email': user.email,
         'full_name': user.full_name,
         'role': user.role,
-        'username': user.username
+        'username': user.username,
+        'created_at': user.created_at,
     } for user in users]
     
     return Response(users_data, status=status.HTTP_200_OK)

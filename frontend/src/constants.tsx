@@ -158,7 +158,8 @@ export function StatusBadge({ status }: { status: Status }) {
 
 //users
 export type UserRole = "admin" | "clinician" | "patient";
-export type UserStatus = "active" | "disabled";
+// export type UserStatus = "active" | "disabled";  MAIN CODE. USE THIS WHEN BACKEND RETURNS THE ACTUAL STATUS
+export type UserStatus = true | false;
 
 type UserRow = {
   id: number;
@@ -167,12 +168,18 @@ type UserRow = {
   role: UserRole;
   createdOn: string;
   lastLogin: string;
-  status: UserStatus;
+  status?: UserStatus;
   avatarUrl?: string;
 };
 
-export function initials(name: string) {
-  return name
+export function initials(name?: string | null) {
+  const normalizedName = (name ?? "").trim();
+
+  if (!normalizedName) {
+    return "U";
+  }
+
+  return normalizedName
     .split(" ")
     .slice(0, 2)
     .map((s) => s[0])
@@ -188,10 +195,10 @@ export const AVATAR_VARIANTS = [
 ] as const;
 
 export function dummyAvatar(
-  name: string,
+  name?: string | null,
   variant: (typeof AVATAR_VARIANTS)[number] = "initials",
 ) {
-  const seed = encodeURIComponent(name.trim() || "user");
+  const seed = encodeURIComponent((name ?? "").trim() || "user");
   return `https://api.dicebear.com/8.x/${variant}/svg?seed=${seed}`;
 }
 
@@ -203,7 +210,7 @@ export const seedUsers: UserRow[] = [
     role: "admin",
     createdOn: "2/11/22",
     lastLogin: "5 minutes ago",
-    status: "active",
+    // status: "active",
     avatarUrl: dummyAvatar("Silas Blackwood", "initials"),
   },
   {
@@ -213,7 +220,7 @@ export const seedUsers: UserRow[] = [
     role: "clinician",
     createdOn: "8/2/21",
     lastLogin: "1 week ago",
-    status: "disabled",
+    // status: "disabled",
     avatarUrl: dummyAvatar("Hazel Willow", "initials"),
   },
   {
@@ -223,7 +230,7 @@ export const seedUsers: UserRow[] = [
     role: "patient",
     createdOn: "8/15/21",
     lastLogin: "3 days ago",
-    status: "active",
+    // status: "active",
     avatarUrl: dummyAvatar("Scarllet Rose", "initials"),
   },
   {
@@ -233,7 +240,7 @@ export const seedUsers: UserRow[] = [
     role: "clinician",
     createdOn: "5/30/25",
     lastLogin: "2 hours ago",
-    status: "active",
+    // status: "active",
     avatarUrl: dummyAvatar("Juniper Skye", "initials"),
   },
   {
@@ -243,7 +250,7 @@ export const seedUsers: UserRow[] = [
     role: "patient",
     createdOn: "5/27/23",
     lastLogin: "Yesterday",
-    status: "disabled",
+    // status: "disabled",
     avatarUrl: dummyAvatar("Jemmy Henry", "initials"),
   },
   {
@@ -253,7 +260,7 @@ export const seedUsers: UserRow[] = [
     role: "clinician",
     createdOn: "5/19/20",
     lastLogin: "30 minutes ago",
-    status: "active",
+    // status: "active",
     avatarUrl: dummyAvatar("Owen Locklear", "initials"),
   },
   {
@@ -263,7 +270,7 @@ export const seedUsers: UserRow[] = [
     role: "admin",
     createdOn: "8/16/22",
     lastLogin: "4 hours ago",
-    status: "active",
+    // status: "active",
     avatarUrl: dummyAvatar("Willow Sage", "initials"),
   },
 ];
