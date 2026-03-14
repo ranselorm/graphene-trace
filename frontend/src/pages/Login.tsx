@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/authContext";
 import { Icon } from "@iconify/react";
@@ -82,6 +82,8 @@ export function LoginPage() {
     };
   }, [password]);
 
+  const isPasswordValid = Object.values(passwordValidation).every(Boolean);
+
   const demoHints = useMemo(
     () => [
       { label: "Patient", email: "patient@demo.com" },
@@ -97,6 +99,34 @@ export function LoginPage() {
       navigate(roleHome(session.user.role), { replace: true });
     }
   }, [isAuthenticated, session, navigate]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      // await login({ email, password });
+      loginMutation.mutate({ email, password });
+
+      // After login, go where they intended (if it matches their role) or to role home.
+      // For now, keep it simple: always go to role home (prevents confusing cross-role deep links).
+      // We can enhance later to validate the "from" path belongs to their role.
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _ = from;
+
+      // session state updates async; easiest is navigate in a microtask
+      queueMicrotask(() => {
+        // We rely on updated auth state
+        // If it hasn't updated yet, a second navigation will happen via RequireAuth/IndexRedirect anyway.
+        navigate("/", { replace: true });
+      });
+    } catch (err: any) {
+      setError(err?.message ?? "Login failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async (e: any) => {
     e.preventDefault();
@@ -125,13 +155,13 @@ export function LoginPage() {
           });
           localStorage.setItem("accessToken", data.access);
 
-          // Preserve the intended destination for future role-safe deep-link handling.
-          void from;
-          setLoading(false);
+          //navigate user
+          setTimeout(() => {
+            console.log(data, "LOGIN SUCCESSFUL");
+            navigate("/admin", { replace: true });
+          }, 1000);
         },
-
         onError: (error) => {
-          setLoading(false);
           const msg = getErrorMessage(error);
           toast.error(msg, {
             position: "top-center",
