@@ -8,21 +8,9 @@ import { LoginPage } from "@/pages/Login";
 import { PatientLayout } from "./layouts/PatientLayout";
 import { ClinicianLayout } from "./layouts/ClinicianLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
-import Overview from "./pages/admin/Overview";
-import Users from "./pages/admin/Users";
-import Patients from "./pages/admin/Patients";
-import Clinicians from "./pages/admin/Clinicians";
-import Settings from "./pages/admin/Settings";
-import Assignments from "./pages/admin/Assignments";
+import ClinicianOverviewPage from "./pages/clinician/Overview";
+import PatientDashboardPage from "./pages/patient/Dashboard";
 import { routesConfig } from "./routesConfig";
-
-// Placeholder screens for now (we’ll replace with real pages later)
-const PatientDashboard = () => (
-  <div className="p-6">Patient Dashboard (placeholder)</div>
-);
-const ClinicianHome = () => (
-  <div className="p-6">Clinician Home (placeholder)</div>
-);
 
 function roleHome(role: Role) {
   switch (role) {
@@ -31,7 +19,8 @@ function roleHome(role: Role) {
     case "clinician":
       return "/clinician";
     case "admin":
-      return "/admin";
+      // return "/admin";
+      return "/clinician";
     default:
       return "/login";
   }
@@ -106,14 +95,15 @@ export function App() {
               index
               element={<Navigate to="/patient/dashboard" replace />}
             />
-            <Route path="dashboard" element={<PatientDashboard />} />
+            <Route path="dashboard" element={<PatientDashboardPage />} />
           </Route>
         </Route>
 
         {/* Clinician portal */}
-        <Route element={<RequireRole allow={["clinician"]} />}>
+        {/* <Route element={<RequireRole allow={["clinician"]} />}> */}
+        <Route element={<RequireRole allow={["clinician", "admin"]} />}>
           <Route path="/clinician" element={<ClinicianLayout />}>
-            <Route index element={<ClinicianHome />} />
+            <Route index element={<ClinicianOverviewPage />} />
           </Route>
         </Route>
 
@@ -123,13 +113,6 @@ export function App() {
             {routesConfig.map(({ path, element }) => (
               <Route key={path} path={path} element={element} />
             ))}
-
-            {/* <Route index element={<Overview />} />
-            <Route path="users" element={<Users />} />
-            <Route path="patients" element={<Patients />} />
-            <Route path="clinicians" element={<Clinicians />} />
-            <Route path="assignments" element={<Assignments />} />
-            <Route path="settings" element={<Settings />} /> */}
           </Route>
         </Route>
       </Route>
