@@ -104,7 +104,6 @@ export function App() {
         </Route>
 
         {/* Clinician portal */}
-        {/* <Route element={<RequireRole allow={["clinician"]} />}> */}
         <Route element={<RequireRole allow={["clinician"]} />}>
           <Route path="/clinician" element={<ClinicianLayout />}>
             {clinicianRoutesConfig.map(({ path, element }) => (
