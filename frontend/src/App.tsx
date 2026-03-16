@@ -19,8 +19,8 @@ function roleHome(role: Role) {
     case "clinician":
       return "/clinician";
     case "admin":
-      // return "/admin";
-      return "/clinician";
+      return "/admin";
+    // return "/clinician";
     default:
       return "/login";
   }
@@ -101,7 +101,7 @@ export function App() {
 
         {/* Clinician portal */}
         {/* <Route element={<RequireRole allow={["clinician"]} />}> */}
-        <Route element={<RequireRole allow={["clinician", "admin"]} />}>
+        <Route element={<RequireRole allow={["clinician"]} />}>
           <Route path="/clinician" element={<ClinicianLayout />}>
             <Route index element={<ClinicianOverviewPage />} />
           </Route>

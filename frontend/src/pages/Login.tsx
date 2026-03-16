@@ -23,8 +23,8 @@ import axios from "axios";
 function roleHome(role: "patient" | "clinician" | "admin") {
   if (role === "patient") return "/patient/dashboard";
   if (role === "clinician") return "/clinician";
-  // return "/admin";
-  return "/clinician";
+  if (role === "admin") return "/admin";
+  return "/login";
 }
 
 function PasswordRequirement({ met, text }: { met: boolean; text: string }) {
@@ -104,6 +104,8 @@ export function LoginPage() {
       alert("Please enter both email and password");
       return;
     }
+    setError(null);
+    setLoading(true);
     loginMutation.mutate(
       { email, password },
       {
@@ -124,10 +126,12 @@ export function LoginPage() {
           });
           localStorage.setItem("accessToken", data.access);
           setLoading(false);
+          navigate(roleHome(data.user.role), { replace: true });
         },
         onError: (error) => {
           setLoading(false);
           const msg = getErrorMessage(error);
+          setError(msg);
           toast.error(msg, {
             position: "top-center",
             style: {

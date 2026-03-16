@@ -48,8 +48,8 @@ const titleByRole: Record<Role, string> = {
 function roleHome(role: Role) {
   if (role === "patient") return "/patient/dashboard";
   if (role === "clinician") return "/clinician";
-  //   return "/admin";
-  return "/clinician";
+  return "/admin";
+  // return "/clinician";
 }
 
 function roleTitle(role: Role, pathname: string) {
