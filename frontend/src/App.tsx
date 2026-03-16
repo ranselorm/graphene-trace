@@ -8,9 +8,11 @@ import { LoginPage } from "@/pages/Login";
 import { PatientLayout } from "./layouts/PatientLayout";
 import { ClinicianLayout } from "./layouts/ClinicianLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
-import ClinicianOverviewPage from "./pages/clinician/Overview";
-import PatientDashboardPage from "./pages/patient/Dashboard";
-import { routesConfig } from "./routesConfig";
+import {
+  adminRoutesConfig,
+  clinicianRoutesConfig,
+  patientRoutesConfig,
+} from "./routesConfig";
 
 function roleHome(role: Role) {
   switch (role) {
@@ -95,7 +97,9 @@ export function App() {
               index
               element={<Navigate to="/patient/dashboard" replace />}
             />
-            <Route path="dashboard" element={<PatientDashboardPage />} />
+            {patientRoutesConfig.map(({ path, element }) => (
+              <Route key={path} path={path} element={element} />
+            ))}
           </Route>
         </Route>
 
@@ -103,14 +107,16 @@ export function App() {
         {/* <Route element={<RequireRole allow={["clinician"]} />}> */}
         <Route element={<RequireRole allow={["clinician"]} />}>
           <Route path="/clinician" element={<ClinicianLayout />}>
-            <Route index element={<ClinicianOverviewPage />} />
+            {clinicianRoutesConfig.map(({ path, element }) => (
+              <Route key={path} path={path} element={element} />
+            ))}
           </Route>
         </Route>
 
         {/* Admin portal */}
         <Route element={<RequireRole allow={["admin"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
-            {routesConfig.map(({ path, element }) => (
+            {adminRoutesConfig.map(({ path, element }) => (
               <Route key={path} path={path} element={element} />
             ))}
           </Route>
