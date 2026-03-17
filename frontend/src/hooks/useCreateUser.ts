@@ -57,6 +57,42 @@ export const useCreateUser = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["patients"] });
+      queryClient.invalidateQueries({ queryKey: ["clinicians"] });
+    },
+  });
+};
+
+export const useDeleteUser = () => {
+  const { accessToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      role,
+    }: {
+      id: number;
+      role: "clinician" | "patient";
+    }) => {
+      const base = import.meta.env.VITE_BASE_URL;
+      const endpoint =
+        role === "clinician"
+          ? `${base}/clinicians/${id}/`
+          : `${base}/patients/${id}/`;
+
+      const response = await axios.delete(endpoint, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["clinicians"] });
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
     },
   });
 };

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Eye, Plus } from "lucide-react";
+import { Eye, Plus, Trash2 } from "lucide-react";
 import axios from "axios";
 
 import { Button } from "@/components/ui/button";
@@ -44,12 +44,14 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { useUsers } from "@/hooks/useUsers";
-import { useCreateUser } from "@/hooks/useCreateUser";
+import { useCreateUser, useDeleteUser } from "@/hooks/useCreateUser";
 import { toast } from "sonner";
 
 type NewUserRole = "clinician" | "patient";
@@ -284,6 +286,11 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState<UserStatus | "all">("all");
   const [search, setSearch] = useState("");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: number;
+    role: "clinician" | "patient";
+    username?: string | null;
+  } | null>(null);
   const [newUserRole, setNewUserRole] = useState<NewUserRole>("clinician");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -298,6 +305,7 @@ export default function UsersPage() {
   // hooks
   const { data } = useUsers();
   const createUserMutation = useCreateUser();
+  const deleteUserMutation = useDeleteUser();
 
   const filteredUsers = useMemo(() => {
     const sourceUsers = data?.users ?? [];
@@ -401,6 +409,33 @@ export default function UsersPage() {
           toast.success(`${newUserRole} created successfully`);
           setIsAddUserOpen(false);
           resetAddUserForm();
+        },
+        onError: (error) => {
+          toast.error(getErrorMessage(error));
+        },
+      },
+    );
+  };
+
+  const handleDeleteUser = (
+    userId: number,
+    role: "clinician" | "patient",
+    username?: string | null,
+  ) => {
+    setDeleteTarget({ id: userId, role, username });
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    const { id, role } = deleteTarget;
+    const label = role === "clinician" ? "Clinician" : "Patient";
+
+    deleteUserMutation.mutate(
+      { id, role },
+      {
+        onSuccess: () => {
+          toast.success(`${label} deleted successfully`);
+          setDeleteTarget(null);
         },
         onError: (error) => {
           toast.error(getErrorMessage(error));
@@ -525,6 +560,23 @@ export default function UsersPage() {
                         {/* <Pencil className="h-4 w-4 text-zinc-700" /> */}
                         <Icon icon="mage:edit" />
                       </Button>
+                      {user?.role !== "admin" ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-lg"
+                          disabled={deleteUserMutation.isPending}
+                          onClick={() =>
+                            handleDeleteUser(
+                              user?.id,
+                              user?.role,
+                              user?.username,
+                            )
+                          }
+                        >
+                          <Trash2 className="h-4 w-4 text-rose-600" />
+                        </Button>
+                      ) : null}
                       {/* <Switch
                         checked={u.status === "active"}
                         onCheckedChange={(checked) =>
@@ -585,6 +637,44 @@ export default function UsersPage() {
           </div>
         </div>
       </Card>
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete {deleteTarget?.role}?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">
+                {deleteTarget?.username || "this user"}
+              </span>
+              ? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              className="rounded-lg"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleteUserMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="rounded-lg bg-rose-600 hover:bg-rose-700 text-white"
+              onClick={confirmDelete}
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog
         open={isAddUserOpen}
         onOpenChange={(open) => {
