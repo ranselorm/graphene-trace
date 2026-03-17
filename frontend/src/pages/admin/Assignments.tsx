@@ -127,7 +127,9 @@ export default function Assignments() {
         </div>
         <div className="flex gap-4 text-sm">
           <div className="text-center">
-            <div className="font-semibold text-zinc-900">{clinicians.length}</div>
+            <div className="font-semibold text-zinc-900">
+              {clinicians.length}
+            </div>
             <div className="text-zinc-500">Clinicians</div>
           </div>
           <div className="text-center">
@@ -135,7 +137,9 @@ export default function Assignments() {
             <div className="text-zinc-500">Assigned</div>
           </div>
           <div className="text-center">
-            <div className="font-semibold text-zinc-900">{unassigned.length}</div>
+            <div className="font-semibold text-zinc-900">
+              {unassigned.length}
+            </div>
             <div className="text-zinc-500">Unassigned</div>
           </div>
         </div>
