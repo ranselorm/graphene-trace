@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import Clinician
+from .permissions import IsAdminRole
 from accounts.models import User
 from patients.models import PatientProfile
 
@@ -13,6 +14,19 @@ class ClinicianViewSet(viewsets.ModelViewSet):
     """
     queryset = Clinician.objects.all().select_related('user')
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        admin_only_actions = {
+            'create',
+            'update',
+            'partial_update',
+            'destroy',
+            'assign_patient',
+            'unassign_patient',
+        }
+        if self.action in admin_only_actions:
+            return [IsAuthenticated(), IsAdminRole()]
+        return [IsAuthenticated()]
     
     def list(self, request):
         """List all clinicians with their details"""
