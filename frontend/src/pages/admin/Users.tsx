@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { Eye, Plus } from "lucide-react";
+import { Eye, Plus, Trash2 } from "lucide-react";
+import axios from "axios";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -37,18 +38,23 @@ import { SlidersHorizontal, Download, Upload, X } from "lucide-react";
 import {
   type UserRole,
   type UserStatus,
-  seedUsers,
   dummyAvatar,
   initials,
 } from "@/constants";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { useUsers } from "@/hooks/useUsers";
+import { useCreateUser, useDeleteUser } from "@/hooks/useCreateUser";
+import { toast } from "sonner";
+
+type NewUserRole = "clinician" | "patient";
 
 function roleLabel(role: UserRole) {
   if (role === "admin") return "Admin";
@@ -272,28 +278,76 @@ export function UsersToolbar({
 }
 
 export default function UsersPage() {
-  const [users, setUsers] = useState(seedUsers);
   const [selected, setSelected] = useState<Record<number, boolean>>({});
+  const [statusByUserId, setStatusByUserId] = useState<Record<number, boolean>>(
+    {},
+  );
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
   const [statusFilter, setStatusFilter] = useState<UserStatus | "all">("all");
   const [search, setSearch] = useState("");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: number;
+    role: "clinician" | "patient";
+    username?: string | null;
+  } | null>(null);
+  const [newUserRole, setNewUserRole] = useState<NewUserRole>("clinician");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [specialty, setSpecialty] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [riskCategory, setRiskCategory] = useState<"low" | "medium" | "high">(
+    "low",
+  );
 
-  const filtered = useMemo(() => {
-    return users.filter((u) => {
+  // hooks
+  const { data } = useUsers();
+  const createUserMutation = useCreateUser();
+  const deleteUserMutation = useDeleteUser();
+
+  const filteredUsers = useMemo(() => {
+    const sourceUsers = data?.users ?? [];
+
+    const filtered = sourceUsers.filter((u: any) => {
       const roleOk = roleFilter === "all" || u.role === roleFilter;
-      const statusOk = statusFilter === "all" || u.status === statusFilter;
-      return roleOk && statusOk;
+      const statusOk =
+        statusFilter === "all" || Boolean(u.status) === statusFilter;
+      const q = search.trim().toLowerCase();
+      const searchOk =
+        !q ||
+        `${u.username ?? ""}`.toLowerCase().includes(q) ||
+        `${u.email ?? ""}`.toLowerCase().includes(q) ||
+        `${u.full_name ?? ""}`.toLowerCase().includes(q);
+
+      return roleOk && statusOk && searchOk;
     });
-  }, [users, roleFilter, statusFilter]);
+
+    // Newest users first.
+    return filtered.sort((a: any, b: any) => {
+      const aTime = new Date(
+        a.created_at ?? a.date_joined ?? a.createdOn ?? a.createdAt ?? 0,
+      ).getTime();
+      const bTime = new Date(
+        b.created_at ?? b.date_joined ?? b.createdOn ?? b.createdAt ?? 0,
+      ).getTime();
+
+      if (aTime !== bTime) return bTime - aTime;
+
+      // Fallback for equal/missing timestamps.
+      return Number(b.id ?? 0) - Number(a.id ?? 0);
+    });
+  }, [data?.users, roleFilter, statusFilter, search]);
 
   const allChecked =
-    filtered.length > 0 && filtered.every((u) => selected[u.id]);
-  const someChecked = filtered.some((u) => selected[u.id]) && !allChecked;
+    filteredUsers.length > 0 && filteredUsers.every((u: any) => selected[u.id]);
+  const someChecked =
+    filteredUsers.some((u: any) => selected[u.id]) && !allChecked;
 
   const toggleAll = (checked: boolean) => {
     const next = { ...selected };
-    filtered.forEach((u) => {
+    filteredUsers.forEach((u: any) => {
       next[u.id] = checked;
     });
     setSelected(next);
@@ -304,24 +358,96 @@ export default function UsersPage() {
   };
 
   const toggleStatus = (id: number, checked: boolean) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id ? { ...u, status: checked ? true : false } : u,
-      ),
+    setStatusByUserId((prev) => ({ ...prev, [id]: checked }));
+  };
+
+  console.log("users in component", data?.users);
+
+  const resetAddUserForm = () => {
+    setNewUserRole("clinician");
+    setFullName("");
+    setEmail("");
+    setUsername("");
+    setPassword("");
+    setSpecialty("");
+    setDateOfBirth("");
+    setRiskCategory("low");
+  };
+
+  const getErrorMessage = (error: unknown) => {
+    if (axios.isAxiosError(error)) {
+      const data = error.response?.data as any;
+      return (
+        data?.error || data?.detail || error.message || "Failed to create user"
+      );
+    }
+    if (error instanceof Error) return error.message;
+    return "Failed to create user";
+  };
+
+  const handleCreateUser = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!email || !password || !username) {
+      toast.error("Email, username and password are required");
+      return;
+    }
+
+    createUserMutation.mutate(
+      {
+        role: newUserRole,
+        full_name: fullName,
+        email,
+        username,
+        password,
+        specialty: newUserRole === "clinician" ? specialty : undefined,
+        date_of_birth: newUserRole === "patient" ? dateOfBirth : undefined,
+        risk_category: newUserRole === "patient" ? riskCategory : undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success(`${newUserRole} created successfully`);
+          setIsAddUserOpen(false);
+          resetAddUserForm();
+        },
+        onError: (error) => {
+          toast.error(getErrorMessage(error));
+        },
+      },
     );
   };
 
-  //dummy user status
-  const isActive = true;
+  const handleDeleteUser = (
+    userId: number,
+    role: "clinician" | "patient",
+    username?: string | null,
+  ) => {
+    setDeleteTarget({ id: userId, role, username });
+  };
 
-  //hooks
-  const { data } = useUsers();
-  console.log("users in component", data?.users);
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    const { id, role } = deleteTarget;
+    const label = role === "clinician" ? "Clinician" : "Patient";
+
+    deleteUserMutation.mutate(
+      { id, role },
+      {
+        onSuccess: () => {
+          toast.success(`${label} deleted successfully`);
+          setDeleteTarget(null);
+        },
+        onError: (error) => {
+          toast.error(getErrorMessage(error));
+        },
+      },
+    );
+  };
 
   return (
     <div className="">
       <UsersToolbar
-        totalCount={data?.users.length}
+        totalCount={data?.users?.length ?? 0}
         search={search}
         onSearchChange={setSearch}
         roleFilter={roleFilter}
@@ -362,7 +488,7 @@ export default function UsersPage() {
             </TableHeader>
 
             <TableBody>
-              {data?.users.map((user: any) => (
+              {filteredUsers.map((user: any) => (
                 <TableRow key={user?.id} className="hover:bg-zinc-50">
                   <TableCell>
                     <Checkbox
@@ -414,7 +540,7 @@ export default function UsersPage() {
                   {/* <TableCell className="text-zinc-700">{u.lastLogin}</TableCell> */}
 
                   <TableCell>
-                    <StatusBadge status={isActive} />
+                    <StatusBadge status={statusByUserId[user?.id] ?? true} />
                   </TableCell>
 
                   <TableCell className="text-right">
@@ -434,6 +560,23 @@ export default function UsersPage() {
                         {/* <Pencil className="h-4 w-4 text-zinc-700" /> */}
                         <Icon icon="mage:edit" />
                       </Button>
+                      {user?.role !== "admin" ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-lg"
+                          disabled={deleteUserMutation.isPending}
+                          onClick={() =>
+                            handleDeleteUser(
+                              user?.id,
+                              user?.role,
+                              user?.username,
+                            )
+                          }
+                        >
+                          <Trash2 className="h-4 w-4 text-rose-600" />
+                        </Button>
+                      ) : null}
                       {/* <Switch
                         checked={u.status === "active"}
                         onCheckedChange={(checked) =>
@@ -441,7 +584,7 @@ export default function UsersPage() {
                         }
                       /> */}
                       <Switch
-                        checked={isActive === true}
+                        checked={statusByUserId[user?.id] ?? true}
                         onCheckedChange={(checked) =>
                           toggleStatus(user?.id, checked)
                         }
@@ -451,7 +594,7 @@ export default function UsersPage() {
                 </TableRow>
               ))}
 
-              {filtered.length === 0 ? (
+              {filteredUsers.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={8}
@@ -494,54 +637,196 @@ export default function UsersPage() {
           </div>
         </div>
       </Card>
-      <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete {deleteTarget?.role}?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">
+                {deleteTarget?.username || "this user"}
+              </span>
+              ? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              className="rounded-lg"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleteUserMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="rounded-lg bg-rose-600 hover:bg-rose-700 text-white"
+              onClick={confirmDelete}
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isAddUserOpen}
+        onOpenChange={(open) => {
+          setIsAddUserOpen(open);
+          if (!open) resetAddUserForm();
+        }}
+      >
         {/* <DialogTrigger>Open</DialogTrigger> */}
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add user and assign a role</DialogTitle>
           </DialogHeader>
+          <form onSubmit={handleCreateUser}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="fieldgroup-full_name">
+                  Full Name
+                </FieldLabel>
+                <Input
+                  id="fieldgroup-full_name"
+                  type="text"
+                  placeholder="Ran Selorm"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </Field>
 
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="fieldgroup-email">Full Name</FieldLabel>
-              <Input
-                id="fieldgroup-full_name"
-                type="email"
-                placeholder="Ran Selorm"
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="fieldgroup-email">Email</FieldLabel>
-              <Input
-                id="fieldgroup-email"
-                type="email"
-                placeholder="ranselorm@example.com"
-              />
-            </Field>
+              <Field>
+                <FieldLabel htmlFor="fieldgroup-email">Email</FieldLabel>
+                <Input
+                  id="fieldgroup-email"
+                  type="email"
+                  placeholder="ranselorm@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </Field>
 
-            <Field>
-              <FieldLabel htmlFor="fieldgroup-email">Roles</FieldLabel>
-              <Select>
-                <SelectTrigger className="w-full max-w-48">
-                  <SelectValue placeholder="Assign a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Roles</SelectLabel>
-                    <SelectItem value="apple">Admin</SelectItem>
-                    <SelectItem value="banana">Clinician</SelectItem>
-                    <SelectItem value="blueberry">Patient</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field orientation="horizontal">
-              <Button type="reset" variant="outline">
-                Cancel
-              </Button>
-              <Button type="submit">Submit</Button>
-            </Field>
-          </FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="fieldgroup-username">Username</FieldLabel>
+                <Input
+                  id="fieldgroup-username"
+                  type="text"
+                  placeholder="ranselorm"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="fieldgroup-password">Password</FieldLabel>
+                <Input
+                  id="fieldgroup-password"
+                  type="password"
+                  placeholder="Password123"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="fieldgroup-role">Role</FieldLabel>
+                <Select
+                  value={newUserRole}
+                  onValueChange={(value) =>
+                    setNewUserRole(value as NewUserRole)
+                  }
+                >
+                  <SelectTrigger id="fieldgroup-role" className="w-full">
+                    <SelectValue placeholder="Assign a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Roles</SelectLabel>
+                      <SelectItem value="clinician">Clinician</SelectItem>
+                      <SelectItem value="patient">Patient</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              {newUserRole === "clinician" ? (
+                <Field>
+                  <FieldLabel htmlFor="fieldgroup-specialty">
+                    Specialty
+                  </FieldLabel>
+                  <Input
+                    id="fieldgroup-specialty"
+                    type="text"
+                    placeholder="Cardiology"
+                    value={specialty}
+                    onChange={(e) => setSpecialty(e.target.value)}
+                  />
+                </Field>
+              ) : null}
+
+              {newUserRole === "patient" ? (
+                <>
+                  <Field>
+                    <FieldLabel htmlFor="fieldgroup-dob">
+                      Date of Birth
+                    </FieldLabel>
+                    <Input
+                      id="fieldgroup-dob"
+                      type="date"
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="fieldgroup-risk">
+                      Risk Category
+                    </FieldLabel>
+                    <Select
+                      value={riskCategory}
+                      onValueChange={(value) =>
+                        setRiskCategory(value as "low" | "medium" | "high")
+                      }
+                    >
+                      <SelectTrigger id="fieldgroup-risk" className="w-full">
+                        <SelectValue placeholder="Risk category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </>
+              ) : null}
+
+              <Field orientation="horizontal">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsAddUserOpen(false);
+                    resetAddUserForm();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createUserMutation.isPending}>
+                  {createUserMutation.isPending ? "Submitting..." : "Submit"}
+                </Button>
+              </Field>
+            </FieldGroup>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

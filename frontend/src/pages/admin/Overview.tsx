@@ -2,7 +2,7 @@ import MetricsCard from "@/components/admin/MetricsCard";
 import { AlertsTrendChart } from "@/components/admin/AlertsTrendChart";
 import { AssignmentCoverageChart } from "@/components/admin/AssignmentCoverageChart";
 import { AlertSeverityChart } from "@/components/admin/AlertSeverityChart";
-import { AlertStatusChart } from "@/components/admin/AlertStatusChart";
+import { ClinicianWorkloadChart } from "@/components/admin/ClinicianWorkloadChart";
 
 import { LatestAlertsTable } from "@/components/admin/LatestAlerts";
 import { AlertDetailsSheet } from "@/components/admin/AlertDetails";
@@ -68,6 +68,17 @@ function Overview() {
   const { mutate: resolveAlert, isPending: isResolving } = useMarkResolved();
 
   const { data: overviewData } = useDasbboard();
+  const clinicianWorkloadData = overviewData?.clinician_workload?.map(
+    (entry: any) => ({
+      clinician: entry?.clinician_name ?? "Unknown",
+      openAlerts: entry?.open_alerts ?? 0,
+    }),
+  ) ?? [
+    { clinician: "Dr. A. Mensah", openAlerts: 9 },
+    { clinician: "Dr. L. Chen", openAlerts: 6 },
+    { clinician: "Dr. P. Musa", openAlerts: 4 },
+    { clinician: "Dr. E. Grant", openAlerts: 2 },
+  ];
   console.log(overviewData?.users);
 
   if (isResolving) {
@@ -83,24 +94,28 @@ function Overview() {
             value={overviewData?.users?.total}
             change={2}
             icon="clarity:users-line"
+            tone="blue"
           />
           <MetricsCard
             label="Patients"
             value={overviewData?.users?.patients}
             change={3}
             icon="material-symbols-light:recent-patient-outline-rounded"
+            tone="emerald"
           />
           <MetricsCard
             label="Clinician"
             value={overviewData?.users?.clinicians}
             change={-2}
             icon="healthicons:doctor"
+            tone="violet"
           />
           <MetricsCard
             label="Alerts"
             value={overviewData?.alerts?.by_severity?.total}
             change={12}
             icon="fluent:alert-24-regular"
+            tone="rose"
           />
         </div>
 
@@ -131,11 +146,7 @@ function Overview() {
             medium={overviewData?.alerts?.by_severity?.medium ?? 0}
             low={overviewData?.alerts?.by_severity?.low ?? 0}
           />
-          <AlertStatusChart
-            newCount={overviewData?.alerts?.by_status?.new ?? 0}
-            reviewed={overviewData?.alerts?.by_status?.reviewed ?? 0}
-            resolved={overviewData?.alerts?.by_status?.resolved ?? 0}
-          />
+          <ClinicianWorkloadChart data={clinicianWorkloadData} />
         </div>
         {/* <RecentActivityComponent items={recentActivities} maxHeight={320} /> */}
         <LatestAlertsTable items={data} onView={handleView} />

@@ -6,9 +6,19 @@ import Patients from "./pages/admin/Patients";
 import Clinicians from "./pages/admin/Clinicians";
 import Assignments from "./pages/admin/Assignments";
 import Settings from "./pages/admin/Settings";
+import ClinicianOverview from "./pages/clinician/Overview";
+import ClinicianPatients from "./pages/clinician/Patients";
+import ClinicianAlerts from "./pages/clinician/Alerts";
+import PatientDashboard from "./pages/patient/Dashboard";
 
-export const routesConfig = [
-  //admin route configuration
+type RouteConfig = {
+  path: string;
+  title: string;
+  element: React.ReactElement;
+};
+
+export const adminRoutesConfig: RouteConfig[] = [
+  // admin route configuration
   {
     path: "/admin",
     title: "Overview",
@@ -43,3 +53,32 @@ export const routesConfig = [
     element: React.createElement(Settings),
   },
 ];
+
+export const clinicianRoutesConfig: RouteConfig[] = [
+  {
+    path: "/clinician",
+    title: "Overview",
+    element: React.createElement(ClinicianOverview),
+  },
+  {
+    path: "patients",
+    title: "Patients",
+    element: React.createElement(ClinicianPatients),
+  },
+  {
+    path: "alerts",
+    title: "Alerts",
+    element: React.createElement(ClinicianAlerts),
+  },
+];
+
+export const patientRoutesConfig: RouteConfig[] = [
+  {
+    path: "dashboard",
+    title: "Dashboard",
+    element: React.createElement(PatientDashboard),
+  },
+];
+
+// Backward-compatible alias used by older components.
+export const routesConfig = adminRoutesConfig;

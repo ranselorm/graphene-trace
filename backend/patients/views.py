@@ -4,11 +4,18 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import PatientProfile
 from accounts.models import User
+from clinicians.permissions import IsAdminRole
 
 
 class PatientViewSet(viewsets.ModelViewSet):
     queryset = PatientProfile.objects.all().select_related('patient', 'clinician')
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        admin_only_actions = {'create', 'update', 'partial_update', 'destroy'}
+        if self.action in admin_only_actions:
+            return [IsAuthenticated(), IsAdminRole()]
+        return [IsAuthenticated()]
     
     def list(self, request):
         patients = self.get_queryset()
