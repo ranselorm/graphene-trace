@@ -120,7 +120,6 @@ export function LoginPage() {
           // Persist to localStorage
           localStorage.setItem("authSession", JSON.stringify(data));
           toast.success("Login successful", {
-            position: "top-center",
             style: {
               background: "#2e5090",
               color: "#ffffff",
@@ -136,7 +135,6 @@ export function LoginPage() {
           const msg = getErrorMessage(error);
           setError(msg);
           toast.error(msg, {
-            position: "top-center",
             style: {
               background: "#FF5C5C",
               color: "#ffffff",

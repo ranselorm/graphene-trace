@@ -361,8 +361,6 @@ export default function UsersPage() {
     setStatusByUserId((prev) => ({ ...prev, [id]: checked }));
   };
 
-  console.log("users in component", data?.users);
-
   const resetAddUserForm = () => {
     setNewUserRole("clinician");
     setFullName("");
@@ -434,11 +432,23 @@ export default function UsersPage() {
       { id, role },
       {
         onSuccess: () => {
-          toast.success(`${label} deleted successfully`);
+          toast.success(`${label} deleted successfully`, {
+            style: {
+              background: "#2e5090",
+              color: "#ffffff",
+              border: "0.5px solid #dbeafe",
+            },
+          });
           setDeleteTarget(null);
         },
         onError: (error) => {
-          toast.error(getErrorMessage(error));
+          toast.error(getErrorMessage(error), {
+            style: {
+              background: "#FF5C5C",
+              color: "#ffffff",
+              border: "0.5px solid #FF8A8A",
+            },
+          });
         },
       },
     );
@@ -665,7 +675,7 @@ export default function UsersPage() {
               Cancel
             </Button>
             <Button
-              className="rounded-lg bg-rose-600 hover:bg-rose-700 text-white"
+              className="rounded-lg bg-[#FF5C5C] hover:bg-[#e85555] text-white"
               onClick={confirmDelete}
               disabled={deleteUserMutation.isPending}
             >
