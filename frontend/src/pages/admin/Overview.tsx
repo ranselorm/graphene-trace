@@ -15,6 +15,7 @@ import { useDetails } from "@/hooks/useAlertDetails";
 import { useMarkResolved } from "@/hooks/useMarkResolved";
 import { toast } from "sonner";
 import { useDasbboard } from "@/hooks/useDashboard";
+import { useClinicians } from "@/hooks/useAssignments";
 
 function Overview() {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -68,6 +69,7 @@ function Overview() {
   const { mutate: resolveAlert, isPending: isResolving } = useMarkResolved();
 
   const { data: overviewData } = useDasbboard();
+  const { data: clinicians = [] } = useClinicians();
   const clinicianWorkloadData = overviewData?.clinician_workload?.map(
     (entry: any) => ({
       clinician: entry?.clinician_name ?? "Unknown",
@@ -80,6 +82,16 @@ function Overview() {
     { clinician: "Dr. E. Grant", openAlerts: 2 },
   ];
   console.log(overviewData?.users);
+
+  const clinicianAssignmentBreakdown = clinicians
+    .map((clinician: any) => ({
+      clinician: clinician.full_name || clinician.username || "Unknown",
+      patients: clinician.assigned_patients_count ?? 0,
+    }))
+    .sort(
+      (left: { patients: number }, right: { patients: number }) =>
+        right.patients - left.patients,
+    );
 
   if (isResolving) {
     console.log("resolving");
@@ -140,6 +152,7 @@ function Overview() {
                   ]
                 : []
             }
+            clinicianBreakdown={clinicianAssignmentBreakdown}
           />
           <AlertSeverityChart
             high={overviewData?.alerts?.by_severity?.high ?? 0}

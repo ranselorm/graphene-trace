@@ -4,6 +4,7 @@ export type Role = "patient" | "clinician" | "admin";
 type AuthContextType = {
   session: any;
   isAuthenticated: boolean;
+  isAuthReady: boolean;
   logout: () => void;
   setSession: (session: any) => void;
   setIsAuthenticated: (authenticated: boolean) => void;
@@ -17,6 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -31,6 +33,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (storedToken) {
       setAccessToken(storedToken);
     }
+
+    setIsAuthReady(true);
   }, []);
 
   //   const login = async (email: string, password: string) => {
@@ -54,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         session,
         isAuthenticated,
+        isAuthReady,
         accessToken,
         logout,
         setSession,

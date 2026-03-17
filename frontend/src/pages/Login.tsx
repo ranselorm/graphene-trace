@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/authContext";
 import { Icon } from "@iconify/react";
 
@@ -44,12 +44,15 @@ export function LoginPage() {
   const {
     session,
     isAuthenticated,
+    isAuthReady,
     setSession,
     setIsAuthenticated,
     setAccessToken,
   } = useAuth();
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (location.state as { from?: string } | null)?.from ?? null;
 
   const [email, setEmail] = useState("admin@example.com");
   const [password, setPassword] = useState("admin123");
@@ -92,10 +95,10 @@ export function LoginPage() {
 
   // If someone is already logged in and reaches /login, push them out to their portal.
   useEffect(() => {
-    if (isAuthenticated && session) {
-      navigate(roleHome(session.user.role), { replace: true });
+    if (isAuthReady && isAuthenticated && session) {
+      navigate(redirectTo || roleHome(session.user.role), { replace: true });
     }
-  }, [isAuthenticated, session, navigate]);
+  }, [isAuthReady, isAuthenticated, session, navigate, redirectTo]);
 
   const handleLogin = async (e: any) => {
     e.preventDefault();
@@ -126,7 +129,7 @@ export function LoginPage() {
           });
           localStorage.setItem("accessToken", data.access);
           setLoading(false);
-          navigate(roleHome(data.user.role), { replace: true });
+          navigate(redirectTo || roleHome(data.user.role), { replace: true });
         },
         onError: (error) => {
           setLoading(false);

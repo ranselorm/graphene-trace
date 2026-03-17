@@ -5,8 +5,8 @@ import { Icon } from "@iconify/react";
 const links = [
   { label: "Overview", to: "/admin" },
   { label: "Users", to: "/admin/users" },
-  { label: "Patients", to: "/admin/patients" },
-  { label: "Clinicians", to: "/admin/clinicians" },
+  // { label: "Patients", to: "/admin/patients" },
+  // { label: "Clinicians", to: "/admin/clinicians" },
   { label: "Assignments", to: "/admin/assignments" },
   { label: "Settings", to: "/admin/settings" },
 ];

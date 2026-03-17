@@ -33,11 +33,33 @@ function roleHome(role: Role) {
  * If not logged in, sends them to /login and remembers where they tried to go.
  */
 function RequireAuth() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAuthReady } = useAuth();
   const location = useLocation();
 
+  if (!isAuthReady) {
+    return null;
+  }
+
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{
+          from: `${location.pathname}${location.search}${location.hash}`,
+        }}
+      />
+    );
+  }
+
+  return <Outlet />;
+}
+
+function AuthLoadingGate() {
+  const { isAuthReady } = useAuth();
+
+  if (!isAuthReady) {
+    return null;
   }
 
   return <Outlet />;
@@ -73,7 +95,9 @@ function RequireRole({ allow }: { allow: Role[] }) {
  * If not logged in, send to /login.
  */
 function IndexRedirect() {
-  const { session, isAuthenticated } = useAuth();
+  const { session, isAuthenticated, isAuthReady } = useAuth();
+
+  if (!isAuthReady) return null;
 
   if (!isAuthenticated || !session) return <Navigate to="/login" replace />;
   return <Navigate to={roleHome(session.user.role)} replace />;
@@ -84,40 +108,42 @@ export function App() {
     <Routes>
       {/* Public */}
       {/* <Route path="/login" element={<LoginPage />} /> */}
-      <Route path="/login" element={<LoginPage />} />
+      <Route element={<AuthLoadingGate />}>
+        <Route path="/login" element={<LoginPage />} />
 
-      {/* Everything else requires auth */}
-      <Route element={<RequireAuth />}>
-        <Route path="/" element={<IndexRedirect />} />
+        {/* Everything else requires auth */}
+        <Route element={<RequireAuth />}>
+          <Route path="/" element={<IndexRedirect />} />
 
-        {/* Patient portal */}
-        <Route element={<RequireRole allow={["patient"]} />}>
-          <Route path="/patient" element={<PatientLayout />}>
-            <Route
-              index
-              element={<Navigate to="/patient/dashboard" replace />}
-            />
-            {patientRoutesConfig.map(({ path, element }) => (
-              <Route key={path} path={path} element={element} />
-            ))}
+          {/* Patient portal */}
+          <Route element={<RequireRole allow={["patient"]} />}>
+            <Route path="/patient" element={<PatientLayout />}>
+              <Route
+                index
+                element={<Navigate to="/patient/dashboard" replace />}
+              />
+              {patientRoutesConfig.map(({ path, element }) => (
+                <Route key={path} path={path} element={element} />
+              ))}
+            </Route>
           </Route>
-        </Route>
 
-        {/* Clinician portal */}
-        <Route element={<RequireRole allow={["clinician"]} />}>
-          <Route path="/clinician" element={<ClinicianLayout />}>
-            {clinicianRoutesConfig.map(({ path, element }) => (
-              <Route key={path} path={path} element={element} />
-            ))}
+          {/* Clinician portal */}
+          <Route element={<RequireRole allow={["clinician"]} />}>
+            <Route path="/clinician" element={<ClinicianLayout />}>
+              {clinicianRoutesConfig.map(({ path, element }) => (
+                <Route key={path} path={path} element={element} />
+              ))}
+            </Route>
           </Route>
-        </Route>
 
-        {/* Admin portal */}
-        <Route element={<RequireRole allow={["admin"]} />}>
-          <Route path="/admin" element={<AdminLayout />}>
-            {adminRoutesConfig.map(({ path, element }) => (
-              <Route key={path} path={path} element={element} />
-            ))}
+          {/* Admin portal */}
+          <Route element={<RequireRole allow={["admin"]} />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              {adminRoutesConfig.map(({ path, element }) => (
+                <Route key={path} path={path} element={element} />
+              ))}
+            </Route>
           </Route>
         </Route>
       </Route>

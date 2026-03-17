@@ -22,8 +22,8 @@ const navByRole: Record<Role, NavItem[]> = {
   admin: [
     { label: "Overview", to: "/admin", end: true },
     { label: "Users", to: "/admin/users" },
-    { label: "Patients", to: "/admin/patients" },
-    { label: "Clinicians", to: "/admin/clinicians" },
+    // { label: "Patients", to: "/admin/patients" },
+    // { label: "Clinicians", to: "/admin/clinicians" },
     { label: "Assignments", to: "/admin/assignments" },
     { label: "Settings", to: "/admin/settings" },
   ],
