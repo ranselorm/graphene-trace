@@ -38,5 +38,19 @@ class PatientProfile(models.Model):
 
     risk_category = models.CharField(max_length=10, choices=RISK_CHOICES, blank=True)
 
+    # Patient-set pain thresholds (pain is subjective, so each patient defines their own)
+    pressure_threshold = models.IntegerField(
+        default=2000,
+        help_text="Pressure value (1-4095) above which the patient considers painful"
+    )
+    contact_area_threshold = models.FloatField(
+        default=50.0,
+        help_text="Percentage of contact area that is concerning for this patient"
+    )
+    duration_threshold = models.IntegerField(
+        default=300,
+        help_text="Seconds of sustained pressure above threshold before it's risky"
+    )
+
     def __str__(self):
         return f"Profile: {self.patient.fullname}" 
