@@ -93,7 +93,7 @@ def get_all_users(request):
     Get all users - requires authentication
     """
     from .models import User
-    users = User.objects.all()
+    users = User.objects.order_by('-created_at', '-id')
     users_data = [{
         'id': user.id,
         'email': user.email,

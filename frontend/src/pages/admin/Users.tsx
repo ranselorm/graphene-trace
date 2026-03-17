@@ -38,7 +38,6 @@ import { SlidersHorizontal, Download, Upload, X } from "lucide-react";
 import {
   type UserRole,
   type UserStatus,
-  seedUsers,
   dummyAvatar,
   initials,
 } from "@/constants";
@@ -277,8 +276,10 @@ export function UsersToolbar({
 }
 
 export default function UsersPage() {
-  const [users, setUsers] = useState(seedUsers);
   const [selected, setSelected] = useState<Record<number, boolean>>({});
+  const [statusByUserId, setStatusByUserId] = useState<Record<number, boolean>>(
+    {},
+  );
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
   const [statusFilter, setStatusFilter] = useState<UserStatus | "all">("all");
   const [search, setSearch] = useState("");
@@ -293,6 +294,10 @@ export default function UsersPage() {
   const [riskCategory, setRiskCategory] = useState<"low" | "medium" | "high">(
     "low",
   );
+
+  // hooks
+  const { data } = useUsers();
+  const createUserMutation = useCreateUser();
 
   const filteredUsers = useMemo(() => {
     const sourceUsers = data?.users ?? [];
@@ -345,19 +350,9 @@ export default function UsersPage() {
   };
 
   const toggleStatus = (id: number, checked: boolean) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id ? { ...u, status: checked ? true : false } : u,
-      ),
-    );
+    setStatusByUserId((prev) => ({ ...prev, [id]: checked }));
   };
 
-  //dummy user status
-  const isActive = true;
-
-  //hooks
-  const { data } = useUsers();
-  const createUserMutation = useCreateUser();
   console.log("users in component", data?.users);
 
   const resetAddUserForm = () => {
@@ -510,7 +505,7 @@ export default function UsersPage() {
                   {/* <TableCell className="text-zinc-700">{u.lastLogin}</TableCell> */}
 
                   <TableCell>
-                    <StatusBadge status={isActive} />
+                    <StatusBadge status={statusByUserId[user?.id] ?? true} />
                   </TableCell>
 
                   <TableCell className="text-right">
@@ -537,7 +532,7 @@ export default function UsersPage() {
                         }
                       /> */}
                       <Switch
-                        checked={isActive === true}
+                        checked={statusByUserId[user?.id] ?? true}
                         onCheckedChange={(checked) =>
                           toggleStatus(user?.id, checked)
                         }
