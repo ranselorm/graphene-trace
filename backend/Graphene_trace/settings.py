@@ -76,6 +76,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'django.contrib.postgres',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -91,6 +92,7 @@ INSTALLED_APPS = [
     'telemetry',
     'alerts',
     'comments',
+    'datainput',
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -151,7 +153,7 @@ DATABASES = { #connects the django to your database, make sure the details match
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'graphene_trace',         
-        'USER': 'graphene_user',         
+        'USER': 'postgres',         
         'PASSWORD': 'Password123', 
         'HOST': 'localhost',          
         'PORT': '5432',               # default PostgreSQL port
