@@ -49,6 +49,20 @@ def dashboard_stats(request):
     total_comments = Comment.objects.count()
     recent_comments = Comment.objects.filter(created_at__gte=week_ago).count()
     
+    # Clinician workload (open alerts per clinician)
+    clinician_workload = []
+    clinicians = User.objects.filter(role='clinician').order_by('-id')
+    for clinician in clinicians:
+        open_alerts_count = Alert.objects.filter(
+            patient__clinician=clinician,
+            status__in=['new', 'reviewed']
+        ).count()
+        clinician_workload.append({
+            'clinician_name': clinician.full_name or clinician.username,
+            'clinician_id': clinician.id,
+            'open_alerts': open_alerts_count
+        })
+    
     return Response({
         'users': {
             'total': total_users,
@@ -83,7 +97,8 @@ def dashboard_stats(request):
         'comments': {
             'total': total_comments,
             'recent': recent_comments
-        }
+        },
+        'clinician_workload': clinician_workload
     }, status=status.HTTP_200_OK)
 
 

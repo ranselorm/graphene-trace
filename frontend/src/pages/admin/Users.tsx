@@ -404,12 +404,24 @@ export default function UsersPage() {
       },
       {
         onSuccess: () => {
-          toast.success(`${newUserRole} created successfully`);
+          toast.success(`${newUserRole} created successfully`, {
+            style: {
+              background: "#2e5090",
+              color: "#ffffff",
+              border: "0.5px solid #dbeafe",
+            },
+          });
           setIsAddUserOpen(false);
           resetAddUserForm();
         },
         onError: (error) => {
-          toast.error(getErrorMessage(error));
+          toast.error(getErrorMessage(error), {
+            style: {
+              background: "#FF5C5C",
+              color: "#ffffff",
+              border: "0.5px solid #FF8A8A",
+            },
+          });
         },
       },
     );

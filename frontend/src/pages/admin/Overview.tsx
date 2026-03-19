@@ -70,17 +70,12 @@ function Overview() {
 
   const { data: overviewData } = useDasbboard();
   const { data: clinicians = [] } = useClinicians();
-  const clinicianWorkloadData = overviewData?.clinician_workload?.map(
+  const clinicianWorkloadData = (overviewData?.clinician_workload ?? []).map(
     (entry: any) => ({
       clinician: entry?.clinician_name ?? "Unknown",
       openAlerts: entry?.open_alerts ?? 0,
     }),
-  ) ?? [
-    { clinician: "Dr. A. Mensah", openAlerts: 9 },
-    { clinician: "Dr. L. Chen", openAlerts: 6 },
-    { clinician: "Dr. P. Musa", openAlerts: 4 },
-    { clinician: "Dr. E. Grant", openAlerts: 2 },
-  ];
+  );
   console.log(overviewData?.users);
 
   const clinicianAssignmentBreakdown = clinicians
