@@ -83,7 +83,7 @@ export function LoginPage() {
 
   const demoHints = useMemo(
     () => [
-      { label: "Patient", email: "patient@demo.com" },
+      { label: "Patient", email: "amir_butti@example.com" },
       { label: "Clinician", email: "clinician@demo.com" },
       { label: "Admin", email: "admin@example.com" },
     ],
