@@ -7,6 +7,7 @@ import {
   CartesianGrid,
   XAxis,
   YAxis,
+  Label,
   Tooltip,
 } from "recharts";
 
@@ -21,22 +22,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  useTelemetrySessionFrames,
+  useUploadTelemetryCsv,
+  useTelemetrySessionHeatmap,
   useTelemetrySessionMetrics,
   useTelemetrySessions,
 } from "@/hooks/useTelemetry";
+import { toast } from "sonner";
 
 type HeatCell = {
   color: string;
   value: number;
 };
 
-function valueToHeatColor(value: number): string {
-  const ratio = Math.max(0, Math.min(1, value / 4095));
-  const hue = 220 - 220 * ratio;
-  const saturation = 90;
-  const lightness = 50 - ratio * 16;
-  return `hsl(${hue} ${saturation}% ${lightness}%)`;
+function valueToHeatColor(value: number, maxValue: number): string {
+  if (maxValue <= 0) return "#0f172a";
+
+  const ratio = value / maxValue;
+  if (ratio < 0.2) return "#1e3a8a";
+  if (ratio < 0.45) return "#0ea5e9";
+  if (ratio < 0.7) return "#f59e0b";
+  return "#dc2626";
 }
 
 export default function PatientDashboardPage() {
@@ -45,8 +50,23 @@ export default function PatientDashboardPage() {
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
     null,
   );
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [frameIndex, setFrameIndex] = useState(0);
+  const [isHeatmapFullscreen, setIsHeatmapFullscreen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const uploadMutation = useUploadTelemetryCsv();
+
+  useEffect(() => {
+    if (!isHeatmapFullscreen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsHeatmapFullscreen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isHeatmapFullscreen]);
 
   useEffect(() => {
     if (!selectedSessionId && sessions.length > 0) {
@@ -56,50 +76,83 @@ export default function PatientDashboardPage() {
 
   const { data: metricsData, isLoading: loadingMetrics } =
     useTelemetrySessionMetrics(selectedSessionId);
-  const { data: framesData, isLoading: loadingFrames } =
-    useTelemetrySessionFrames(selectedSessionId, 0, 55);
+  const selectedSession =
+    sessions.find((session) => session.id === selectedSessionId) ?? null;
+
+  const { data: heatmapData, isLoading: loadingHeatmap } =
+    useTelemetrySessionHeatmap(selectedSessionId);
 
   const timeline = metricsData?.timeline ?? [];
-  const chartData = useMemo(
-    () =>
-      timeline.map((item) => ({
+  const chartData = useMemo(() => {
+    const maxPoints = 600;
+    if (timeline.length <= maxPoints) {
+      return timeline.map((item) => ({
         frame: item.frame_number,
         peakPressure: item.peak_pressure_index,
         risk: item.risk_score,
-      })),
-    [timeline],
+      }));
+    }
+
+    const step = Math.ceil(timeline.length / maxPoints);
+    const sampled = [];
+    for (let i = 0; i < timeline.length; i += step) {
+      const item = timeline[i];
+      sampled.push({
+        frame: item.frame_number,
+        peakPressure: item.peak_pressure_index,
+        risk: item.risk_score,
+      });
+    }
+    return sampled;
+  }, [timeline]);
+
+  const sessionHeatGrid = heatmapData?.heatmap ?? [];
+  const maxHeatValue = heatmapData?.max_value ?? 0;
+
+  const heatCells: HeatCell[] = useMemo(
+    () =>
+      sessionHeatGrid.flatMap((row) =>
+        row.map((value) => ({
+          value,
+          color: valueToHeatColor(value, maxHeatValue),
+        })),
+      ),
+    [sessionHeatGrid, maxHeatValue],
   );
 
-  const frames = framesData?.frames ?? [];
-
-  useEffect(() => {
-    setFrameIndex(0);
-  }, [selectedSessionId]);
-
-  useEffect(() => {
-    if (!isPlaying || frames.length <= 1) return;
-
-    const intervalId = window.setInterval(() => {
-      setFrameIndex((prev) => (prev + 1) % frames.length);
-    }, 140);
-
-    return () => window.clearInterval(intervalId);
-  }, [isPlaying, frames.length]);
-
-  const activeFrame = frames[frameIndex];
-  const heatCells: HeatCell[] = useMemo(() => {
-    if (!activeFrame?.data) return [];
-    return activeFrame.data.flatMap((row) =>
-      row.map((value) => ({
-        value,
-        color: valueToHeatColor(value),
-      })),
-    );
-  }, [activeFrame]);
-
   const averages = metricsData?.averages;
-  const selectedSession =
-    sessions.find((session) => session.id === selectedSessionId) ?? null;
+
+  const handleUpload = () => {
+    if (!selectedFile) {
+      toast.error("Select a CSV file first.");
+      return;
+    }
+
+    if (!selectedFile.name.toLowerCase().endsWith(".csv")) {
+      toast.error("Only CSV files are supported.");
+      return;
+    }
+
+    uploadMutation.mutate(selectedFile, {
+      onSuccess: (data) => {
+        setSelectedSessionId(data.session_id);
+        setSelectedFile(null);
+        toast.success("CSV uploaded and processed successfully.");
+      },
+      onError: (error) => {
+        const message =
+          typeof error === "object" &&
+          error !== null &&
+          "response" in error &&
+          typeof (error as { response?: { data?: { error?: string } } })
+            .response?.data?.error === "string"
+            ? (error as { response?: { data?: { error?: string } } }).response
+                ?.data?.error
+            : "Upload failed. Please try again.";
+        toast.error(message);
+      },
+    });
+  };
 
   return (
     <div className="container mx-auto space-y-6">
@@ -113,12 +166,12 @@ export default function PatientDashboardPage() {
               Live telemetry
             </p>
             <h1 className="mt-1 text-2xl md:text-3xl font-bold text-zinc-900">
-              Pressure map and frame playback
+              Session pressure heatmap
             </h1>
             <p className="mt-2 text-sm text-zinc-700 max-w-2xl">
               This view is reading directly from the backend telemetry API using
-              your seeded sessions and rendering raw pressure frames as a
-              heatmap.
+              your selected session and rendering a single pressure map where
+              colors show intensity at each sensor point.
             </p>
           </div>
 
@@ -135,6 +188,37 @@ export default function PatientDashboardPage() {
           </div>
         </div>
       </section>
+
+      <Card className="border-zinc-200 bg-white">
+        <CardHeader>
+          <CardTitle className="text-lg text-zinc-900">
+            Upload New Telemetry CSV
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center">
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            onChange={(event) => {
+              const file = event.target.files?.[0] ?? null;
+              setSelectedFile(file);
+            }}
+            className="block w-full text-sm text-zinc-700 file:mr-3 file:rounded-md file:border file:border-zinc-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:text-zinc-700"
+          />
+          <Button
+            onClick={handleUpload}
+            disabled={uploadMutation.isPending}
+            className="md:w-auto w-full"
+          >
+            {uploadMutation.isPending ? "Uploading..." : "Upload CSV"}
+          </Button>
+          {selectedFile && (
+            <span className="text-xs text-zinc-500 truncate">
+              Selected: {selectedFile.name}
+            </span>
+          )}
+        </CardContent>
+      </Card>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="border-blue-100 bg-white animate-in fade-in slide-in-from-bottom-1 duration-500">
@@ -230,16 +314,52 @@ export default function PatientDashboardPage() {
         <CardContent>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+              <LineChart
+                data={chartData}
+                margin={{ top: 10, right: 12, left: 16, bottom: 28 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
                 <XAxis
                   dataKey="frame"
                   tick={{ fill: "#71717a", fontSize: 12 }}
-                />
-                <YAxis tick={{ fill: "#71717a", fontSize: 12 }} width={40} />
+                  tickMargin={10}
+                >
+                  <Label
+                    value="Frame (time order)"
+                    position="insideBottom"
+                    offset={-14}
+                    fill="#71717a"
+                    fontSize={12}
+                  />
+                </XAxis>
+                <YAxis
+                  tick={{ fill: "#71717a", fontSize: 12 }}
+                  tickMargin={10}
+                  width={52}
+                >
+                  <Label
+                    value="Pressure / Risk"
+                    angle={-90}
+                    position="insideLeft"
+                    offset={-2}
+                    fill="#71717a"
+                    fontSize={12}
+                  />
+                </YAxis>
                 <Tooltip
                   contentStyle={{ borderRadius: 12, borderColor: "#e4e4e7" }}
                   labelStyle={{ color: "#18181b", fontWeight: 700 }}
+                  labelFormatter={(value) => `Frame ${value}`}
+                  formatter={(value, name) => {
+                    const numericValue =
+                      typeof value === "number" ? value : Number(value);
+
+                    if (name === "Peak Pressure") {
+                      return [numericValue.toFixed(1), "Pressure Intensity"];
+                    }
+
+                    return [numericValue.toFixed(2), "Risk (0-10)"];
+                  }}
                 />
                 <Line
                   type="monotone"
@@ -276,84 +396,152 @@ export default function PatientDashboardPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-zinc-200 bg-white">
-        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle className="text-lg text-zinc-900">
-              Pressure Heatmap Playback
-            </CardTitle>
-            <p className="text-sm text-zinc-600 mt-1">
-              Raw 32x32 pressure matrix per frame. Blue is lower pressure, red
-              is higher.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsPlaying((current) => !current)}
-              disabled={frames.length <= 1}
-            >
-              <Icon
-                icon={isPlaying ? "mdi:pause" : "mdi:play"}
-                className="mr-1"
-              />
-              {isPlaying ? "Pause" : "Play"}
-            </Button>
-            <Badge className="rounded-full border border-zinc-200 bg-zinc-100 text-zinc-700">
-              Frame {activeFrame?.frame_number ?? 0}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loadingFrames ? (
-            <p className="text-sm text-zinc-500">Loading frame data...</p>
-          ) : (
-            <>
-              <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-900/95 p-3">
-                <div
-                  className="grid gap-px"
-                  style={{
-                    gridTemplateColumns: "repeat(32, minmax(0, 1fr))",
-                    width: 360,
-                  }}
-                >
-                  {heatCells.map((cell, index) => (
-                    <div
-                      key={index}
-                      className="h-2.5 w-2.5"
-                      style={{ backgroundColor: cell.color }}
-                      title={String(cell.value)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <input
-                  type="range"
-                  min={0}
-                  max={Math.max(frames.length - 1, 0)}
-                  value={Math.min(frameIndex, Math.max(frames.length - 1, 0))}
-                  onChange={(event) =>
-                    setFrameIndex(Number(event.target.value))
+      <div
+        className={
+          isHeatmapFullscreen
+            ? "fixed inset-0 z-50 bg-zinc-950/95 p-4 md:p-8 overflow-auto"
+            : ""
+        }
+      >
+        <Card
+          className={
+            isHeatmapFullscreen
+              ? "border-zinc-700 bg-zinc-900 min-h-[calc(100vh-2rem)]"
+              : "border-zinc-200 bg-white"
+          }
+        >
+          <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle
+                className={
+                  isHeatmapFullscreen
+                    ? "text-lg text-zinc-100"
+                    : "text-lg text-zinc-900"
+                }
+              >
+                Session Pressure Heatmap
+              </CardTitle>
+              <p
+                className={
+                  isHeatmapFullscreen
+                    ? "text-sm text-zinc-300 mt-1"
+                    : "text-sm text-zinc-600 mt-1"
+                }
+              >
+                This is an average map across all frames in the selected
+                session. Blue is lower pressure and red is higher pressure.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span
+                className={
+                  isHeatmapFullscreen
+                    ? "inline-flex items-center gap-1 text-zinc-300"
+                    : "inline-flex items-center gap-1 text-zinc-600"
+                }
+              >
+                <span className="h-2.5 w-2.5 rounded-xs bg-[#1e3a8a]" /> Low
+              </span>
+              <span
+                className={
+                  isHeatmapFullscreen
+                    ? "inline-flex items-center gap-1 text-zinc-300"
+                    : "inline-flex items-center gap-1 text-zinc-600"
+                }
+              >
+                <span className="h-2.5 w-2.5 rounded-xs bg-[#0ea5e9]" /> Medium
+              </span>
+              <span
+                className={
+                  isHeatmapFullscreen
+                    ? "inline-flex items-center gap-1 text-zinc-300"
+                    : "inline-flex items-center gap-1 text-zinc-600"
+                }
+              >
+                <span className="h-2.5 w-2.5 rounded-xs bg-[#f59e0b]" /> High
+              </span>
+              <span
+                className={
+                  isHeatmapFullscreen
+                    ? "inline-flex items-center gap-1 text-zinc-300"
+                    : "inline-flex items-center gap-1 text-zinc-600"
+                }
+              >
+                <span className="h-2.5 w-2.5 rounded-xs bg-[#dc2626]" /> Very
+                high
+              </span>
+              <Button
+                size="sm"
+                variant={isHeatmapFullscreen ? "secondary" : "outline"}
+                onClick={() => setIsHeatmapFullscreen((prev) => !prev)}
+              >
+                <Icon
+                  icon={
+                    isHeatmapFullscreen
+                      ? "mdi:fullscreen-exit"
+                      : "mdi:fullscreen"
                   }
-                  className="w-full"
-                  disabled={frames.length === 0}
+                  className="mr-1"
                 />
-                <div className="flex items-center justify-between text-xs text-zinc-500">
-                  <span>Frame 0</span>
-                  <span>
-                    {frames.length > 0
-                      ? `Frame ${frames.length - 1}`
-                      : "No frames"}
-                  </span>
+                {isHeatmapFullscreen ? "Exit" : "Fullscreen"}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingHeatmap ? (
+              <p
+                className={
+                  isHeatmapFullscreen
+                    ? "text-sm text-zinc-300"
+                    : "text-sm text-zinc-500"
+                }
+              >
+                Loading frame data...
+              </p>
+            ) : (
+              <>
+                <div
+                  className={
+                    isHeatmapFullscreen
+                      ? "overflow-auto rounded-xl border border-zinc-700 bg-zinc-950 p-4"
+                      : "overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-900/95 p-3"
+                  }
+                >
+                  <div
+                    className="mx-auto grid gap-px"
+                    style={{
+                      gridTemplateColumns: "repeat(32, minmax(0, 1fr))",
+                      width: isHeatmapFullscreen ? "min(92vw, 92vh)" : 360,
+                    }}
+                  >
+                    {heatCells.map((cell, index) => (
+                      <div
+                        key={index}
+                        className="w-full aspect-square"
+                        style={{ backgroundColor: cell.color }}
+                        title={`avg pressure: ${cell.value.toFixed(1)}`}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+
+                <div
+                  className={
+                    isHeatmapFullscreen
+                      ? "mt-4 flex items-center justify-between text-xs text-zinc-300"
+                      : "mt-4 flex items-center justify-between text-xs text-zinc-500"
+                  }
+                >
+                  <span>
+                    Frames aggregated: {heatmapData?.frame_count ?? 0}
+                  </span>
+                  <span>Peak avg cell: {maxHeatValue.toFixed(1)}</span>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-4 md:p-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

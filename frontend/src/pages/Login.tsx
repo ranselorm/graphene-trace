@@ -83,9 +83,41 @@ export function LoginPage() {
 
   const demoHints = useMemo(
     () => [
-      { label: "Patient", email: "amir_butti@example.com" },
-      { label: "Clinician", email: "clinician@demo.com" },
-      { label: "Admin", email: "admin@example.com" },
+      {
+        label: "Patient A",
+        email: "1c0fd777@example.com",
+        password: "patient123",
+      },
+      {
+        label: "Patient B",
+        email: "543d4676@example.com",
+        password: "patient123",
+      },
+      {
+        label: "Patient C",
+        email: "71e66ab3@example.com",
+        password: "patient123",
+      },
+      {
+        label: "Patient D",
+        email: "d13043b3@example.com",
+        password: "patient123",
+      },
+      {
+        label: "Patient E",
+        email: "de0e9b2c@example.com",
+        password: "patient123",
+      },
+      {
+        label: "Clinician",
+        email: "clinician@demo.com",
+        password: "admin123",
+      },
+      {
+        label: "Admin",
+        email: "admin@example.com",
+        password: "admin123",
+      },
     ],
     [],
   );
@@ -265,7 +297,7 @@ export function LoginPage() {
                     <div className="text-xs text-zinc-800 mb-2">
                       Demo accounts
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {demoHints.map((d) => (
                         <Button
                           key={d.email}
@@ -274,7 +306,7 @@ export function LoginPage() {
                           className="border border-zinc-300 cursor-pointer bg-transparent text-xs text-zinc-800 shadow-none"
                           onClick={() => {
                             setEmail(d.email);
-                            setPassword("admin123");
+                            setPassword(d.password);
                             setError(null);
                           }}
                         >
@@ -283,9 +315,9 @@ export function LoginPage() {
                       ))}
                     </div>
                     <div className="mt-2 text-xs text-zinc-500">
-                      Password for all demo accounts:{" "}
+                      Patient CSV demo password:{" "}
                       <span className="text-zinc-600 font-bold">
-                        @Password123
+                        patient123
                       </span>
                     </div>
                   </div>

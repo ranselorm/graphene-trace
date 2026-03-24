@@ -335,3 +335,54 @@ def session_frames(request, session_id):
     }
 
     return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def session_heatmap(request, session_id):
+    """
+    Get aggregated 32x32 session heatmap.
+    GET /api/telemetry/sessions/<session_id>/heatmap/
+
+    Returns per-cell average pressure across all frames in the session,
+    computed server-side to avoid large payloads and frontend crashes.
+    """
+    try:
+        session = PressureSession.objects.get(id=session_id)
+    except PressureSession.DoesNotExist:
+        return Response({'error': 'Session not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    frames = SensorFrame.objects.filter(session=session).only('data').order_by('frame_number')
+    frame_count = frames.count()
+
+    if frame_count == 0:
+        return Response(
+            {
+                'session_id': session.id,
+                'frame_count': 0,
+                'max_value': 0,
+                'heatmap': [[0 for _ in range(FRAME_COLS)] for _ in range(FRAME_ROWS)],
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    sums = [[0.0 for _ in range(FRAME_COLS)] for _ in range(FRAME_ROWS)]
+
+    for frame in frames.iterator(chunk_size=100):
+        data = frame.data
+        for r in range(FRAME_ROWS):
+            for c in range(FRAME_COLS):
+                sums[r][c] += data[r][c]
+
+    heatmap = [[round(sums[r][c] / frame_count, 2) for c in range(FRAME_COLS)] for r in range(FRAME_ROWS)]
+    max_value = max(max(row) for row in heatmap)
+
+    return Response(
+        {
+            'session_id': session.id,
+            'frame_count': frame_count,
+            'max_value': max_value,
+            'heatmap': heatmap,
+        },
+        status=status.HTTP_200_OK,
+    )
