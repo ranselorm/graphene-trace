@@ -10,6 +10,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from alerts.models import Alert
 from patients.models import PatientProfile
 from .models import PressureSession, SensorFrame, FrameMetrics
 
@@ -19,6 +20,17 @@ FRAME_COLS = 32
 FRAMES_PER_SECOND = 14
 # Minimum cluster size for Peak Pressure Index calculation
 PPI_MIN_CLUSTER_PIXELS = 10
+
+# Alert generation thresholds
+MIN_STREAK_SECONDS = 5          # Sustained danger for 5 seconds before alerting
+MIN_STREAK_FRAMES = MIN_STREAK_SECONDS * FRAMES_PER_SECOND  # 70 frames
+COOLDOWN_SECONDS = 10           # Must be safe for 10 seconds before new alert can trigger
+COOLDOWN_FRAMES = COOLDOWN_SECONDS * FRAMES_PER_SECOND       # 140 frames
+
+# Risk score thresholds for alert severity
+RISK_LOW_THRESHOLD = 3.0        # risk_score >= 3 starts a danger streak
+RISK_MEDIUM_THRESHOLD = 5.0     # risk_score >= 5 → medium severity
+RISK_HIGH_THRESHOLD = 7.0       # risk_score >= 7 → high severity
 
 
 def compute_frame_metrics(frame_data, patient_profile):
@@ -76,6 +88,114 @@ def compute_frame_metrics(frame_data, patient_profile):
         'average_pressure': round(average_pressure, 2),
         'risk_score': risk_score,
     }
+
+
+def determine_severity(max_risk_in_streak):
+    """Map the peak risk score in a streak to alert severity."""
+    if max_risk_in_streak >= RISK_HIGH_THRESHOLD:
+        return 'high'
+    elif max_risk_in_streak >= RISK_MEDIUM_THRESHOLD:
+        return 'medium'
+    return 'low'
+
+
+def determine_alert_type(metrics_in_streak, patient_profile):
+    """Determine the primary reason for the alert based on what exceeded thresholds most."""
+    avg_ppi = sum(m.peak_pressure_index for m in metrics_in_streak) / len(metrics_in_streak)
+    avg_contact = sum(m.contact_area_percent for m in metrics_in_streak) / len(metrics_in_streak)
+
+    pressure_exceeded = avg_ppi > patient_profile.pressure_threshold
+    contact_exceeded = avg_contact > patient_profile.contact_area_threshold
+
+    if pressure_exceeded and contact_exceeded:
+        return 'critical_risk'
+    elif pressure_exceeded:
+        return 'sustained_pressure'
+    elif contact_exceeded:
+        return 'high_contact_area'
+    return 'elevated_risk'
+
+
+def check_and_generate_alerts(session, patient_profile):
+    """
+    Walk through a session's frame metrics and generate alerts using bouncing logic.
+    
+    - A "danger streak" starts when risk_score >= RISK_LOW_THRESHOLD (3.0)
+    - An alert is created when the streak lasts >= MIN_STREAK_FRAMES (70 = 5 seconds)
+    - After an alert, a cooldown of COOLDOWN_FRAMES (140 = 10 seconds) of safe frames
+      must pass before a new alert can trigger
+    - Severity is based on the peak risk_score during the streak
+    """
+    metrics = list(
+        FrameMetrics.objects.filter(session=session)
+        .select_related('sensor_frame')
+        .order_by('frame_number')
+    )
+
+    if not metrics:
+        return []
+
+    alerts_created = []
+    streak_start = None         # Index where current danger streak began
+    streak_metrics = []         # Metrics in current streak
+    max_risk_in_streak = 0.0
+    cooldown_remaining = 0      # Frames remaining in cooldown after an alert
+
+    for i, m in enumerate(metrics):
+        # If in cooldown, count down regardless of risk
+        if cooldown_remaining > 0:
+            cooldown_remaining -= 1
+            streak_start = None
+            streak_metrics = []
+            max_risk_in_streak = 0.0
+            continue
+
+        if m.risk_score >= RISK_LOW_THRESHOLD:
+            # In danger zone
+            if streak_start is None:
+                streak_start = i
+                streak_metrics = []
+                max_risk_in_streak = 0.0
+
+            streak_metrics.append(m)
+            max_risk_in_streak = max(max_risk_in_streak, m.risk_score)
+
+            streak_length = i - streak_start + 1
+
+            # Check if streak is long enough to trigger an alert
+            if streak_length >= MIN_STREAK_FRAMES:
+                severity = determine_severity(max_risk_in_streak)
+                alert_type = determine_alert_type(streak_metrics, patient_profile)
+                trigger_frame = metrics[streak_start].sensor_frame
+
+                alert = Alert.objects.create(
+                    patient=patient_profile,
+                    sensor_frame=trigger_frame,
+                    alert_type=alert_type,
+                    severity=severity,
+                    status='new',
+                )
+                alerts_created.append({
+                    'id': alert.id,
+                    'alert_type': alert_type,
+                    'severity': severity,
+                    'trigger_frame': streak_start,
+                    'streak_duration_seconds': round(streak_length / FRAMES_PER_SECOND, 2),
+                    'max_risk_score': max_risk_in_streak,
+                })
+
+                # Enter cooldown
+                cooldown_remaining = COOLDOWN_FRAMES
+                streak_start = None
+                streak_metrics = []
+                max_risk_in_streak = 0.0
+        else:
+            # Safe zone — reset streak
+            streak_start = None
+            streak_metrics = []
+            max_risk_in_streak = 0.0
+
+    return alerts_created
 
 
 @api_view(['POST'])
@@ -204,6 +324,9 @@ def upload_csv(request):
         session.avg_risk_score = round(metric_sums['risk'] / total_frames, 2)
         session.save()
 
+    # Auto-generate alerts based on bouncing threshold logic
+    alerts_generated = check_and_generate_alerts(session, patient_profile)
+
     return Response({
         'message': 'CSV uploaded and processed successfully',
         'session_id': session.id,
@@ -214,7 +337,8 @@ def upload_csv(request):
             'contact_area': session.avg_contact_area,
             'average_pressure': session.avg_pressure,
             'risk_score': session.avg_risk_score,
-        }
+        },
+        'alerts_generated': alerts_generated,
     }, status=status.HTTP_201_CREATED)
 
 
