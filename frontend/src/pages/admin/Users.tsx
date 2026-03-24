@@ -385,6 +385,12 @@ export default function UsersPage() {
     return "Failed to create user";
   };
 
+  const isCreateUserFormValid =
+    fullName.trim().length > 0 &&
+    email.trim().length > 0 &&
+    username.trim().length > 0 &&
+    password.trim().length > 0;
+
   const handleCreateUser = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -699,6 +705,7 @@ export default function UsersPage() {
                   placeholder="Ran Selorm"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  required
                 />
               </Field>
 
@@ -821,7 +828,12 @@ export default function UsersPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createUserMutation.isPending}>
+                <Button
+                  type="submit"
+                  disabled={
+                    createUserMutation.isPending || !isCreateUserFormValid
+                  }
+                >
                   {createUserMutation.isPending ? "Submitting..." : "Submit"}
                 </Button>
               </Field>

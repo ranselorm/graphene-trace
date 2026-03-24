@@ -32,6 +32,8 @@ import { toast } from "sonner";
 type HeatCell = {
   color: string;
   value: number;
+  row: number;
+  col: number;
 };
 
 function valueToHeatColor(value: number, maxValue: number): string {
@@ -47,11 +49,28 @@ function valueToHeatColor(value: number, maxValue: number): string {
 export default function PatientDashboardPage() {
   const { data: sessions = [], isLoading: loadingSessions } =
     useTelemetrySessions();
+
+  const sessionNumberById = useMemo(() => {
+    const sortedOldestFirst = [...sessions].sort(
+      (a, b) =>
+        new Date(a.session_date).getTime() - new Date(b.session_date).getTime(),
+    );
+
+    const map: Record<number, number> = {};
+    sortedOldestFirst.forEach((session, index) => {
+      map[session.id] = index + 1;
+    });
+    return map;
+  }, [sessions]);
+
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
     null,
   );
   const [isHeatmapFullscreen, setIsHeatmapFullscreen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [timePeriod, setTimePeriod] = useState<"1h" | "6h" | "24h" | "all">(
+    "all",
+  );
 
   const uploadMutation = useUploadTelemetryCsv();
 
@@ -74,29 +93,60 @@ export default function PatientDashboardPage() {
     }
   }, [sessions, selectedSessionId]);
 
-  const { data: metricsData, isLoading: loadingMetrics } =
-    useTelemetrySessionMetrics(selectedSessionId);
   const selectedSession =
     sessions.find((session) => session.id === selectedSessionId) ?? null;
+  const selectedSessionNumber = selectedSessionId
+    ? sessionNumberById[selectedSessionId]
+    : null;
+
+  const { data: metricsData, isLoading: loadingMetrics } =
+    useTelemetrySessionMetrics(selectedSessionId);
 
   const { data: heatmapData, isLoading: loadingHeatmap } =
     useTelemetrySessionHeatmap(selectedSessionId);
 
   const timeline = metricsData?.timeline ?? [];
   const chartData = useMemo(() => {
+    let filteredTimeline = timeline;
+
+    // Filter by time period
+    if (timePeriod !== "all" && selectedSession) {
+      const durationSeconds = selectedSession.duration_seconds ?? 0;
+      const totalFrames = timeline.length;
+      const frameRate = totalFrames / durationSeconds;
+
+      // Calculate frame threshold based on time period
+      let timeWindowSeconds = durationSeconds;
+      if (timePeriod === "1h") {
+        timeWindowSeconds = 3600;
+      } else if (timePeriod === "6h") {
+        timeWindowSeconds = 6 * 3600;
+      } else if (timePeriod === "24h") {
+        timeWindowSeconds = 24 * 3600;
+      }
+
+      // Get frames in the last N seconds (assuming constant frame rate)
+      const framesToShow = Math.min(
+        Math.ceil(frameRate * timeWindowSeconds),
+        totalFrames,
+      );
+      const startFrame = totalFrames - framesToShow;
+      filteredTimeline = timeline.slice(Math.max(0, startFrame));
+    }
+
     const maxPoints = 600;
-    if (timeline.length <= maxPoints) {
-      return timeline.map((item) => ({
+    if (filteredTimeline.length <= maxPoints) {
+      return filteredTimeline.map((item) => ({
         frame: item.frame_number,
         peakPressure: item.peak_pressure_index,
         risk: item.risk_score,
       }));
     }
 
-    const step = Math.ceil(timeline.length / maxPoints);
+    const step = Math.ceil(filteredTimeline.length / maxPoints);
     const sampled = [];
-    for (let i = 0; i < timeline.length; i += step) {
-      const item = timeline[i];
+    for (let i = 0; i < filteredTimeline.length; i += step) {
+      const item = filteredTimeline[i];
       sampled.push({
         frame: item.frame_number,
         peakPressure: item.peak_pressure_index,
@@ -104,17 +154,19 @@ export default function PatientDashboardPage() {
       });
     }
     return sampled;
-  }, [timeline]);
+  }, [timeline, timePeriod, selectedSession]);
 
   const sessionHeatGrid = heatmapData?.heatmap ?? [];
   const maxHeatValue = heatmapData?.max_value ?? 0;
 
   const heatCells: HeatCell[] = useMemo(
     () =>
-      sessionHeatGrid.flatMap((row) =>
-        row.map((value) => ({
+      sessionHeatGrid.flatMap((row, rowIndex) =>
+        row.map((value, colIndex) => ({
           value,
           color: valueToHeatColor(value, maxHeatValue),
+          row: rowIndex,
+          col: colIndex,
         })),
       ),
     [sessionHeatGrid, maxHeatValue],
@@ -182,7 +234,7 @@ export default function PatientDashboardPage() {
             </Badge>
             <Badge className="rounded-full border border-blue-200 bg-blue-100 px-3 py-1 text-blue-800">
               {selectedSession
-                ? `Session #${selectedSession.id}`
+                ? `Session ${selectedSessionNumber ?? "-"}`
                 : "No session"}
             </Badge>
           </div>
@@ -207,7 +259,7 @@ export default function PatientDashboardPage() {
           />
           <Button
             onClick={handleUpload}
-            disabled={uploadMutation.isPending}
+            disabled={!selectedFile || uploadMutation.isPending}
             className="md:w-auto w-full"
           >
             {uploadMutation.isPending ? "Uploading..." : "Upload CSV"}
@@ -294,24 +346,61 @@ export default function PatientDashboardPage() {
             </p>
           </div>
 
-          <Select
-            value={selectedSessionId ? String(selectedSessionId) : undefined}
-            onValueChange={(value) => setSelectedSessionId(Number(value))}
-          >
-            <SelectTrigger className="w-55">
-              <SelectValue placeholder="Select session" />
-            </SelectTrigger>
-            <SelectContent>
-              {sessions.map((session) => (
-                <SelectItem key={session.id} value={String(session.id)}>
-                  Session {session.id} · {session.total_frames} frames
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <Select
+              value={selectedSessionId ? String(selectedSessionId) : undefined}
+              onValueChange={(value) => setSelectedSessionId(Number(value))}
+            >
+              <SelectTrigger className="w-55">
+                <SelectValue placeholder="Select session" />
+              </SelectTrigger>
+              <SelectContent>
+                {sessions.map((session) => (
+                  <SelectItem key={session.id} value={String(session.id)}>
+                    Session {sessionNumberById[session.id] ?? "-"} ·{" "}
+                    {session.total_frames} frames
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={timePeriod === "1h" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTimePeriod("1h")}
+              className="text-xs"
+            >
+              Last Hour
+            </Button>
+            <Button
+              variant={timePeriod === "6h" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTimePeriod("6h")}
+              className="text-xs"
+            >
+              Last 6h
+            </Button>
+            <Button
+              variant={timePeriod === "24h" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTimePeriod("24h")}
+              className="text-xs"
+            >
+              Last 24h
+            </Button>
+            <Button
+              variant={timePeriod === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTimePeriod("all")}
+              className="text-xs"
+            >
+              All-Time
+            </Button>
+          </div>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
@@ -503,39 +592,39 @@ export default function PatientDashboardPage() {
                 <div
                   className={
                     isHeatmapFullscreen
-                      ? "overflow-auto rounded-xl border border-zinc-700 bg-zinc-950 p-4"
-                      : "overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-900/95 p-3"
+                      ? "overflow-auto rounded-xl border border-zinc-700  p-4 relative"
+                      : "overflow-x-auto rounded-xl border border-zinc-200  p-3 relative"
                   }
                 >
                   <div
                     className="mx-auto grid gap-px"
                     style={{
                       gridTemplateColumns: "repeat(32, minmax(0, 1fr))",
-                      width: isHeatmapFullscreen ? "min(92vw, 92vh)" : 360,
+                      width: isHeatmapFullscreen ? "min(98vw, 98vh)" : 800,
                     }}
                   >
                     {heatCells.map((cell, index) => (
                       <div
                         key={index}
-                        className="w-full aspect-square"
+                        className="w-full aspect-square relative cursor-pointer transition-all hover:scale-110 hover:z-10 hover:shadow-lg"
                         style={{ backgroundColor: cell.color }}
-                        title={`avg pressure: ${cell.value.toFixed(1)}`}
+                        title={`Row ${cell.row}, Col ${cell.col}\n${cell.value.toFixed(1)} mmHg`}
                       />
                     ))}
                   </div>
-                </div>
 
-                <div
-                  className={
-                    isHeatmapFullscreen
-                      ? "mt-4 flex items-center justify-between text-xs text-zinc-300"
-                      : "mt-4 flex items-center justify-between text-xs text-zinc-500"
-                  }
-                >
-                  <span>
-                    Frames aggregated: {heatmapData?.frame_count ?? 0}
-                  </span>
-                  <span>Peak avg cell: {maxHeatValue.toFixed(1)}</span>
+                  <div
+                    className={
+                      isHeatmapFullscreen
+                        ? "mt-4 flex items-center justify-between text-xs text-zinc-300"
+                        : "mt-4 flex items-center justify-between text-xs text-zinc-500"
+                    }
+                  >
+                    <span>
+                      Frames aggregated: {heatmapData?.frame_count ?? 0}
+                    </span>
+                    <span>Peak avg cell: {maxHeatValue.toFixed(1)}</span>
+                  </div>
                 </div>
               </>
             )}

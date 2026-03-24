@@ -1,6 +1,7 @@
 import csv
 import io
 from datetime import timedelta
+from pathlib import Path
 
 from django.utils import timezone
 from rest_framework import status
@@ -383,6 +384,43 @@ def session_heatmap(request, session_id):
             'frame_count': frame_count,
             'max_value': max_value,
             'heatmap': heatmap,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reset_telemetry(request):
+    """
+    Reset telemetry storage for fresh ingestion.
+    POST /api/telemetry/reset/
+
+    Admin-only endpoint that removes:
+    - All PressureSession rows (cascades to SensorFrame/FrameMetrics)
+    - All CSV files under backend/csv and top-level csv folders
+    """
+    if getattr(request.user, 'role', None) != 'admin':
+        return Response({'error': 'Only admins can reset telemetry data'}, status=status.HTTP_403_FORBIDDEN)
+
+    deleted_rows, _ = PressureSession.objects.all().delete()
+
+    project_root = Path(__file__).resolve().parents[2]
+    csv_dirs = [project_root / 'csv', project_root.parent / 'csv']
+
+    removed_files = 0
+    for folder in csv_dirs:
+        if not folder.exists() or not folder.is_dir():
+            continue
+        for csv_file in folder.glob('*.csv'):
+            csv_file.unlink(missing_ok=True)
+            removed_files += 1
+
+    return Response(
+        {
+            'message': 'Telemetry data reset complete',
+            'deleted_rows': deleted_rows,
+            'deleted_csv_files': removed_files,
         },
         status=status.HTTP_200_OK,
     )

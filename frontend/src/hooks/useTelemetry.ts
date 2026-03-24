@@ -73,6 +73,12 @@ export type UploadTelemetryResponse = {
   };
 };
 
+export type ResetTelemetryResponse = {
+  message: string;
+  deleted_rows: number;
+  deleted_csv_files: number;
+};
+
 async function fetchSessions(token: string): Promise<TelemetrySession[]> {
   const { data } = await axios.get(`${API_BASE}/telemetry/sessions/`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -138,6 +144,21 @@ async function uploadTelemetryCsv(
   return data;
 }
 
+async function resetTelemetry(token: string): Promise<ResetTelemetryResponse> {
+  const { data } = await axios.post(
+    `${API_BASE}/telemetry/reset/`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+
+  return data;
+}
+
 export function useTelemetrySessions() {
   const { accessToken } = useAuth();
 
@@ -188,6 +209,20 @@ export function useUploadTelemetryCsv() {
 
   return useMutation({
     mutationFn: async (file: File) => uploadTelemetryCsv(accessToken!, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["telemetry", "sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["telemetry", "metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["telemetry", "heatmap"] });
+    },
+  });
+}
+
+export function useResetTelemetryData() {
+  const { accessToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => resetTelemetry(accessToken!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["telemetry", "sessions"] });
       queryClient.invalidateQueries({ queryKey: ["telemetry", "metrics"] });
