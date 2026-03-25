@@ -401,6 +401,34 @@ export default function PatientDashboardPage() {
               All-Time
             </Button>
           </div>
+
+          <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-3 md:p-4">
+            <div className="flex items-start gap-2">
+              <Icon
+                icon="mdi:information-outline"
+                className="mt-0.5 text-sky-700"
+              />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-sky-900">
+                  How to read this chart
+                </p>
+                <p className="text-xs text-sky-800">
+                  Pressure values are shown in mmHg (millimeters of mercury), a
+                  standard pressure unit. Higher sustained pressure generally
+                  means higher tissue risk.
+                </p>
+                <p className="text-xs text-sky-800">
+                  X-axis is frame order (time progression). Red line is peak
+                  pressure. Purple line is risk score (0 to 10).
+                </p>
+                <p className="text-xs text-sky-800">
+                  Spikes suggest short high-pressure events. Long high plateaus
+                  suggest sustained pressure and should be reviewed.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
@@ -600,7 +628,7 @@ export default function PatientDashboardPage() {
                     className="mx-auto grid gap-px"
                     style={{
                       gridTemplateColumns: "repeat(32, minmax(0, 1fr))",
-                      width: isHeatmapFullscreen ? "min(98vw, 98vh)" : 800,
+                      width: isHeatmapFullscreen ? "min(98vw, 98vh)" : 700,
                     }}
                   >
                     {heatCells.map((cell, index) => (
