@@ -7,4 +7,5 @@ urlpatterns = [
     path('sessions/<int:session_id>/metrics/', views.session_metrics, name='telemetry-session-metrics'),
     path('sessions/<int:session_id>/frames/', views.session_frames, name='telemetry-session-frames'),
     path('sessions/<int:session_id>/heatmap/', views.session_heatmap, name='telemetry-session-heatmap'),
+    path('report/', views.session_report, name='telemetry-report'),
 ]
