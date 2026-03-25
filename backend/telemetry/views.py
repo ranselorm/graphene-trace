@@ -1,6 +1,6 @@
 import csv
 import io
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from django.utils import timezone
@@ -582,49 +582,50 @@ def session_report(request):
         target_date = timezone.now().date()
 
     yesterday = target_date - timedelta(days=1)
+
     # If two specific sessions are requested, compare those directly
-session_a_id = request.query_params.get('session_a')
-session_b_id = request.query_params.get('session_b')
+    session_a_id = request.query_params.get('session_a')
+    session_b_id = request.query_params.get('session_b')
 
-if session_a_id and session_b_id:
-    try:
-        session_a = PressureSession.objects.get(id=session_a_id)
-        session_b = PressureSession.objects.get(id=session_b_id)
-    except PressureSession.DoesNotExist:
-        return Response({'error': 'One or both sessions not found'}, status=status.HTTP_404_NOT_FOUND)
+    if session_a_id and session_b_id:
+        try:
+            session_a = PressureSession.objects.get(id=session_a_id)
+            session_b = PressureSession.objects.get(id=session_b_id)
+        except PressureSession.DoesNotExist:
+            return Response({'error': 'One or both sessions not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    def session_to_dict(s):
-        return {
-            'id': s.id,
-            'filename': s.filename,
-            'session_date': s.session_date,
-            'duration_seconds': s.duration_seconds,
-            'avg_risk_score': s.avg_risk_score,
-            'avg_peak_pressure': s.avg_peak_pressure,
-            'avg_contact_area': s.avg_contact_area,
-            'avg_pressure': s.avg_pressure,
+        def session_to_dict(s):
+            return {
+                'id': s.id,
+                'filename': s.filename,
+                'session_date': s.session_date,
+                'duration_seconds': s.duration_seconds,
+                'avg_risk_score': s.avg_risk_score,
+                'avg_peak_pressure': s.avg_peak_pressure,
+                'avg_contact_area': s.avg_contact_area,
+                'avg_pressure': s.avg_pressure,
+            }
+
+        def delta(a_val, b_val):
+            a_val = a_val or 0
+            b_val = b_val or 0
+            diff = round(a_val - b_val, 2)
+            pct = round((diff / b_val) * 100, 1) if b_val != 0 else None
+            return {'diff': diff, 'percent_change': pct, 'direction': 'up' if diff > 0 else 'down' if diff < 0 else 'same'}
+
+        comparison = {
+            'risk_score': delta(session_a.avg_risk_score, session_b.avg_risk_score),
+            'peak_pressure': delta(session_a.avg_peak_pressure, session_b.avg_peak_pressure),
+            'contact_area': delta(session_a.avg_contact_area, session_b.avg_contact_area),
+            'avg_pressure': delta(session_a.avg_pressure, session_b.avg_pressure),
         }
 
-    def delta(a_val, b_val):
-        a_val = a_val or 0
-        b_val = b_val or 0
-        diff = round(a_val - b_val, 2)
-        pct = round((diff / b_val) * 100, 1) if b_val != 0 else None
-        return {'diff': diff, 'percent_change': pct, 'direction': 'up' if diff > 0 else 'down' if diff < 0 else 'same'}
-
-    comparison = {
-        'risk_score': delta(session_a.avg_risk_score, session_b.avg_risk_score),
-        'peak_pressure': delta(session_a.avg_peak_pressure, session_b.avg_peak_pressure),
-        'contact_area': delta(session_a.avg_contact_area, session_b.avg_contact_area),
-        'avg_pressure': delta(session_a.avg_pressure, session_b.avg_pressure),
-    }
-
-    return Response({
-        'patient_id': patient_profile.pk,
-        'session_a': session_to_dict(session_a),
-        'session_b': session_to_dict(session_b),
-        'comparison': comparison,
-    }, status=status.HTTP_200_OK)
+        return Response({
+            'patient_id': patient_profile.pk,
+            'session_a': session_to_dict(session_a),
+            'session_b': session_to_dict(session_b),
+            'comparison': comparison,
+        }, status=status.HTTP_200_OK)
 
     def get_day_stats(date):
         sessions = PressureSession.objects.filter(
