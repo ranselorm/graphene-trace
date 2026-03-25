@@ -222,7 +222,7 @@ export default function PatientDashboardPage() {
             </h1>
             <p className="mt-2 text-sm text-zinc-700 max-w-2xl">
               This view is reading directly from the backend telemetry API using
-              your selected session and rendering a single pressure map where
+              the selected session and rendering a single pressure map where
               colors show intensity at each sensor point.
             </p>
           </div>
