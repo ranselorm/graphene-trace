@@ -148,14 +148,7 @@ export function LoginPage() {
 
           // Persist to localStorage
           localStorage.setItem("authSession", JSON.stringify(data));
-          toast.success("Login successful", {
-            position: "top-center",
-            style: {
-              background: "#2e5090",
-              color: "#ffffff",
-              border: "0.5px solid #dbeafe",
-            },
-          });
+          toast.success("Login successful");
           localStorage.setItem("accessToken", data.access);
           setLoading(false);
           navigate(roleHome(data.user.role), { replace: true });
@@ -164,14 +157,7 @@ export function LoginPage() {
           setLoading(false);
           const msg = getErrorMessage(error);
           setError(msg);
-          toast.error(msg, {
-            position: "top-center",
-            style: {
-              background: "#FF5C5C",
-              color: "#ffffff",
-              border: "0.5px solid #FF8A8A",
-            },
-          });
+          toast.error(msg);
           console.log("LOGIN ERROR:", error);
         },
       },

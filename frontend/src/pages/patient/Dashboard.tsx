@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import {
   useUploadTelemetryCsv,
+  useTelemetrySessionFrames,
   useTelemetrySessionHeatmap,
   useTelemetrySessionMetrics,
   useTelemetrySessions,
@@ -71,6 +72,10 @@ export default function PatientDashboardPage() {
   const [timePeriod, setTimePeriod] = useState<"1h" | "6h" | "24h" | "all">(
     "all",
   );
+  const [heatmapMode, setHeatmapMode] = useState<"average" | "single">(
+    "average",
+  );
+  const [selectedFrameNumber, setSelectedFrameNumber] = useState(0);
 
   const uploadMutation = useUploadTelemetryCsv();
 
@@ -93,6 +98,10 @@ export default function PatientDashboardPage() {
     }
   }, [sessions, selectedSessionId]);
 
+  useEffect(() => {
+    setSelectedFrameNumber(0);
+  }, [selectedSessionId]);
+
   const selectedSession =
     sessions.find((session) => session.id === selectedSessionId) ?? null;
   const selectedSessionNumber = selectedSessionId
@@ -104,6 +113,13 @@ export default function PatientDashboardPage() {
 
   const { data: heatmapData, isLoading: loadingHeatmap } =
     useTelemetrySessionHeatmap(selectedSessionId);
+
+  const { data: singleFrameData, isLoading: loadingSingleFrame } =
+    useTelemetrySessionFrames(
+      selectedSessionId,
+      selectedFrameNumber,
+      selectedFrameNumber,
+    );
 
   const timeline = metricsData?.timeline ?? [];
   const chartData = useMemo(() => {
@@ -156,8 +172,19 @@ export default function PatientDashboardPage() {
     return sampled;
   }, [timeline, timePeriod, selectedSession]);
 
-  const sessionHeatGrid = heatmapData?.heatmap ?? [];
-  const maxHeatValue = heatmapData?.max_value ?? 0;
+  const singleFrameGrid = singleFrameData?.frames?.[0]?.data ?? null;
+  const sessionHeatGrid =
+    heatmapMode === "single" && singleFrameGrid
+      ? singleFrameGrid
+      : (heatmapData?.heatmap ?? []);
+
+  const maxHeatValue = useMemo(() => {
+    if (sessionHeatGrid.length === 0) return 0;
+    return Math.max(...sessionHeatGrid.flat());
+  }, [sessionHeatGrid]);
+
+  const isHeatmapLoading =
+    heatmapMode === "single" ? loadingSingleFrame : loadingHeatmap;
 
   const heatCells: HeatCell[] = useMemo(
     () =>
@@ -527,7 +554,7 @@ export default function PatientDashboardPage() {
               : "border-zinc-200 bg-white"
           }
         >
-          <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <CardHeader className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <CardTitle
                 className={
@@ -545,67 +572,115 @@ export default function PatientDashboardPage() {
                     : "text-sm text-zinc-600 mt-1"
                 }
               >
-                This is an average map across all frames in the selected
-                session. Blue is lower pressure and red is higher pressure.
+                {heatmapMode === "average"
+                  ? "This view averages each cell across all frames in the selected session."
+                  : "This view shows one exact frame from the session, matching CSV row and column positions."}{" "}
+                Blue is lower pressure and red is higher pressure.
               </p>
             </div>
-            <div className="flex items-center gap-2 text-xs">
-              <span
-                className={
-                  isHeatmapFullscreen
-                    ? "inline-flex items-center gap-1 text-zinc-300"
-                    : "inline-flex items-center gap-1 text-zinc-600"
-                }
-              >
-                <span className="h-2.5 w-2.5 rounded-xs bg-[#1e3a8a]" /> Low
-              </span>
-              <span
-                className={
-                  isHeatmapFullscreen
-                    ? "inline-flex items-center gap-1 text-zinc-300"
-                    : "inline-flex items-center gap-1 text-zinc-600"
-                }
-              >
-                <span className="h-2.5 w-2.5 rounded-xs bg-[#0ea5e9]" /> Medium
-              </span>
-              <span
-                className={
-                  isHeatmapFullscreen
-                    ? "inline-flex items-center gap-1 text-zinc-300"
-                    : "inline-flex items-center gap-1 text-zinc-600"
-                }
-              >
-                <span className="h-2.5 w-2.5 rounded-xs bg-[#f59e0b]" /> High
-              </span>
-              <span
-                className={
-                  isHeatmapFullscreen
-                    ? "inline-flex items-center gap-1 text-zinc-300"
-                    : "inline-flex items-center gap-1 text-zinc-600"
-                }
-              >
-                <span className="h-2.5 w-2.5 rounded-xs bg-[#dc2626]" /> Very
-                high
-              </span>
-              <Button
-                size="sm"
-                variant={isHeatmapFullscreen ? "secondary" : "outline"}
-                onClick={() => setIsHeatmapFullscreen((prev) => !prev)}
-              >
-                <Icon
-                  icon={
+            <div className="flex flex-col gap-2 text-xs md:items-end">
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant={heatmapMode === "average" ? "default" : "outline"}
+                  onClick={() => setHeatmapMode("average")}
+                >
+                  Average Heatmap
+                </Button>
+                <Button
+                  size="sm"
+                  variant={heatmapMode === "single" ? "default" : "outline"}
+                  onClick={() => setHeatmapMode("single")}
+                >
+                  Single Frame
+                </Button>
+                {heatmapMode === "single" && (
+                  <label className="flex items-center gap-2 text-xs">
+                    <span
+                      className={
+                        isHeatmapFullscreen ? "text-zinc-300" : "text-zinc-600"
+                      }
+                    >
+                      Frame
+                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={selectedSession?.total_frames ?? 1}
+                      value={selectedFrameNumber + 1}
+                      onChange={(event) => {
+                        const maxFrames = selectedSession?.total_frames ?? 1;
+                        const rawValue = Number(event.target.value);
+                        const clamped = Math.min(
+                          maxFrames,
+                          Math.max(1, Number.isFinite(rawValue) ? rawValue : 1),
+                        );
+                        setSelectedFrameNumber(clamped - 1);
+                      }}
+                      className="w-20 rounded-md border border-zinc-300 bg-white px-2 py-1 text-zinc-800"
+                    />
+                  </label>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={
                     isHeatmapFullscreen
-                      ? "mdi:fullscreen-exit"
-                      : "mdi:fullscreen"
+                      ? "inline-flex items-center gap-1 text-zinc-300"
+                      : "inline-flex items-center gap-1 text-zinc-600"
                   }
-                  className="mr-1"
-                />
-                {isHeatmapFullscreen ? "Exit" : "Fullscreen"}
-              </Button>
+                >
+                  <span className="h-2.5 w-2.5 rounded-xs bg-[#1e3a8a]" /> Low
+                </span>
+                <span
+                  className={
+                    isHeatmapFullscreen
+                      ? "inline-flex items-center gap-1 text-zinc-300"
+                      : "inline-flex items-center gap-1 text-zinc-600"
+                  }
+                >
+                  <span className="h-2.5 w-2.5 rounded-xs bg-[#0ea5e9]" />{" "}
+                  Medium
+                </span>
+                <span
+                  className={
+                    isHeatmapFullscreen
+                      ? "inline-flex items-center gap-1 text-zinc-300"
+                      : "inline-flex items-center gap-1 text-zinc-600"
+                  }
+                >
+                  <span className="h-2.5 w-2.5 rounded-xs bg-[#f59e0b]" /> High
+                </span>
+                <span
+                  className={
+                    isHeatmapFullscreen
+                      ? "inline-flex items-center gap-1 text-zinc-300"
+                      : "inline-flex items-center gap-1 text-zinc-600"
+                  }
+                >
+                  <span className="h-2.5 w-2.5 rounded-xs bg-[#dc2626]" /> Very
+                  high
+                </span>
+                <Button
+                  size="xs"
+                  variant={isHeatmapFullscreen ? "secondary" : "outline"}
+                  onClick={() => setIsHeatmapFullscreen((prev) => !prev)}
+                >
+                  <Icon
+                    icon={
+                      isHeatmapFullscreen
+                        ? "mdi:fullscreen-exit"
+                        : "mdi:fullscreen"
+                    }
+                    className="mr-1"
+                  />
+                  {isHeatmapFullscreen ? "Exit" : "Fullscreen"}
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
-            {loadingHeatmap ? (
+            {isHeatmapLoading ? (
               <p
                 className={
                   isHeatmapFullscreen
@@ -636,7 +711,7 @@ export default function PatientDashboardPage() {
                         key={index}
                         className="w-full aspect-square relative cursor-pointer transition-all hover:scale-110 hover:z-10 hover:shadow-lg"
                         style={{ backgroundColor: cell.color }}
-                        title={`Row ${cell.row}, Col ${cell.col}\n${cell.value.toFixed(1)} mmHg`}
+                        title={`Row ${cell.row + 1}, Col ${cell.col + 1}\n${cell.value.toFixed(1)} ${heatmapMode === "single" ? "sensor value" : "avg sensor value"}`}
                       />
                     ))}
                   </div>
@@ -648,10 +723,22 @@ export default function PatientDashboardPage() {
                         : "mt-4 flex items-center justify-between text-xs text-zinc-500"
                     }
                   >
-                    <span>
-                      Frames aggregated: {heatmapData?.frame_count ?? 0}
-                    </span>
-                    <span>Peak avg cell: {maxHeatValue.toFixed(1)}</span>
+                    {heatmapMode === "single" ? (
+                      <>
+                        <span>
+                          Frame shown: {selectedFrameNumber + 1} of{" "}
+                          {selectedSession?.total_frames ?? 0}
+                        </span>
+                        <span>Peak cell value: {maxHeatValue.toFixed(1)}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>
+                          Frames aggregated: {heatmapData?.frame_count ?? 0}
+                        </span>
+                        <span>Peak avg cell: {maxHeatValue.toFixed(1)}</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </>
