@@ -50,14 +50,7 @@ function Overview() {
     if (!selectedAlertId) return;
     resolveAlert(selectedAlertId, {
       onSuccess: () => {
-        toast.success("Alert successfully resolved", {
-          position: "top-center",
-          style: {
-            background: "#2e5090",
-            color: "#ffffff",
-            border: "0.5px solid #dbeafe",
-          },
-        });
+        toast.success("Alert successfully resolved");
         setSheetOpen(false);
         setSelectedAlertId(null);
       },

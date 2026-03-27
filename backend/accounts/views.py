@@ -10,11 +10,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 @permission_classes([AllowAny])
 def login_view(request):
     """
-    Admin/Clinician login endpoint with JWT tokens
+    User login endpoint with JWT tokens
     Expects: { "email": "user@example.com", "password": "password123" }
     Returns: JWT access and refresh tokens with user info
     """
-    email = request.data.get('email')
+    email = (request.data.get('email') or '').strip().lower()
     password = request.data.get('password')
     
     if not email or not password:
@@ -27,13 +27,6 @@ def login_view(request):
     user = authenticate(request, username=email, password=password)
     
     if user is not None:
-        # Restrict login to admin and clinician roles only.
-        if user.role not in ['admin', 'clinician']:
-            return Response(
-                {'error': 'Only admin and clinician users can log in'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
         
