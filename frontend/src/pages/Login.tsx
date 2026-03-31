@@ -151,17 +151,7 @@ export function LoginPage() {
 
           // Persist to localStorage
           localStorage.setItem("authSession", JSON.stringify(data));
-<<<<<<< HEAD
-          toast.success("Login successful", {
-            style: {
-              background: "#2e5090",
-              color: "#ffffff",
-              border: "0.5px solid #dbeafe",
-            },
-          });
-=======
           toast.success("Login successful");
->>>>>>> master
           localStorage.setItem("accessToken", data.access);
           setLoading(false);
           navigate(redirectTo || roleHome(data.user.role), { replace: true });
@@ -170,17 +160,7 @@ export function LoginPage() {
           setLoading(false);
           const msg = getErrorMessage(error);
           setError(msg);
-<<<<<<< HEAD
-          toast.error(msg, {
-            style: {
-              background: "#FF5C5C",
-              color: "#ffffff",
-              border: "0.5px solid #FF8A8A",
-            },
-          });
-=======
           toast.error(msg);
->>>>>>> master
           console.log("LOGIN ERROR:", error);
         },
       },

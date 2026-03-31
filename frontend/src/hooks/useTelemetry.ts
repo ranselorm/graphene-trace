@@ -79,6 +79,19 @@ export type ResetTelemetryResponse = {
   deleted_csv_files: number;
 };
 
+export type PatientThresholdsResponse = {
+  patient_id: number | string;
+  pressure_threshold: number;
+  contact_area_threshold: number;
+  duration_threshold: number;
+};
+
+export type UpdatePatientThresholdsPayload = Partial<{
+  pressure_threshold: number;
+  contact_area_threshold: number;
+  duration_threshold: number;
+}>;
+
 async function fetchSessions(token: string): Promise<TelemetrySession[]> {
   const { data } = await axios.get(`${API_BASE}/telemetry/sessions/`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -159,6 +172,37 @@ async function resetTelemetry(token: string): Promise<ResetTelemetryResponse> {
   return data;
 }
 
+async function fetchPatientThresholds(
+  token: string,
+  patientId: number,
+): Promise<PatientThresholdsResponse> {
+  const { data } = await axios.get(
+    `${API_BASE}/patients/${patientId}/thresholds/`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  return data;
+}
+
+async function updatePatientThresholds(
+  token: string,
+  patientId: number,
+  payload: UpdatePatientThresholdsPayload,
+): Promise<PatientThresholdsResponse> {
+  const { data } = await axios.patch(
+    `${API_BASE}/patients/${patientId}/thresholds/`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+  return data;
+}
+
 export function useTelemetrySessions() {
   const { accessToken } = useAuth();
 
@@ -227,6 +271,31 @@ export function useResetTelemetryData() {
       queryClient.invalidateQueries({ queryKey: ["telemetry", "sessions"] });
       queryClient.invalidateQueries({ queryKey: ["telemetry", "metrics"] });
       queryClient.invalidateQueries({ queryKey: ["telemetry", "heatmap"] });
+    },
+  });
+}
+
+export function usePatientThresholds(patientId: number | null) {
+  const { accessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["patients", "thresholds", patientId],
+    queryFn: () => fetchPatientThresholds(accessToken!, patientId!),
+    enabled: !!accessToken && !!patientId,
+  });
+}
+
+export function useUpdatePatientThresholds(patientId: number | null) {
+  const { accessToken } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: UpdatePatientThresholdsPayload) =>
+      updatePatientThresholds(accessToken!, patientId!, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["patients", "thresholds", patientId],
+      });
     },
   });
 }

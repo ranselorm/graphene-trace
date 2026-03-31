@@ -22,12 +22,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  usePatientThresholds,
   useUploadTelemetryCsv,
+  useUpdatePatientThresholds,
   useTelemetrySessionFrames,
   useTelemetrySessionHeatmap,
   useTelemetrySessionMetrics,
   useTelemetrySessions,
 } from "@/hooks/useTelemetry";
+import { useAuth } from "@/context/authContext";
 import { toast } from "sonner";
 
 type HeatCell = {
@@ -45,6 +48,216 @@ function valueToHeatColor(value: number, maxValue: number): string {
   if (ratio < 0.45) return "#0ea5e9";
   if (ratio < 0.7) return "#f59e0b";
   return "#dc2626";
+}
+
+function ThresholdSettingsCard() {
+  const { session } = useAuth();
+  const patientId = session?.user?.id ?? null;
+  const { data: thresholdsData, isLoading: loadingThresholds } =
+    usePatientThresholds(patientId);
+  const updateThresholdsMutation = useUpdatePatientThresholds(patientId);
+
+  const [pressureThresholdInput, setPressureThresholdInput] = useState("2000");
+  const [contactAreaThresholdInput, setContactAreaThresholdInput] =
+    useState("50");
+  const [durationThresholdInput, setDurationThresholdInput] = useState("300");
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!thresholdsData) return;
+    setPressureThresholdInput(String(thresholdsData.pressure_threshold));
+    setContactAreaThresholdInput(String(thresholdsData.contact_area_threshold));
+    setDurationThresholdInput(String(thresholdsData.duration_threshold));
+  }, [thresholdsData]);
+
+  const pressureThresholdValue = Number(pressureThresholdInput);
+  const contactAreaThresholdValue = Number(contactAreaThresholdInput);
+  const durationThresholdValue = Number(durationThresholdInput);
+
+  const pressureThresholdValid =
+    pressureThresholdInput.trim() !== "" &&
+    Number.isFinite(pressureThresholdValue) &&
+    pressureThresholdValue >= 1 &&
+    pressureThresholdValue <= 4095;
+  const contactAreaThresholdValid =
+    contactAreaThresholdInput.trim() !== "" &&
+    Number.isFinite(contactAreaThresholdValue) &&
+    contactAreaThresholdValue >= 0 &&
+    contactAreaThresholdValue <= 100;
+  const durationThresholdValid =
+    durationThresholdInput.trim() !== "" &&
+    Number.isFinite(durationThresholdValue) &&
+    Number.isInteger(durationThresholdValue) &&
+    durationThresholdValue >= 0;
+
+  const thresholdsFormValid =
+    pressureThresholdValid &&
+    contactAreaThresholdValid &&
+    durationThresholdValid;
+
+  const clampPressureThreshold = () => {
+    const parsed = Number(pressureThresholdInput);
+    if (!Number.isFinite(parsed)) {
+      setPressureThresholdInput("1");
+      return;
+    }
+    setPressureThresholdInput(
+      String(Math.min(4095, Math.max(1, Math.round(parsed)))),
+    );
+  };
+
+  const clampContactAreaThreshold = () => {
+    const parsed = Number(contactAreaThresholdInput);
+    if (!Number.isFinite(parsed)) {
+      setContactAreaThresholdInput("0");
+      return;
+    }
+    const clamped = Math.min(100, Math.max(0, parsed));
+    setContactAreaThresholdInput(clamped.toFixed(1));
+  };
+
+  const clampDurationThreshold = () => {
+    const parsed = Number(durationThresholdInput);
+    if (!Number.isFinite(parsed)) {
+      setDurationThresholdInput("0");
+      return;
+    }
+    setDurationThresholdInput(String(Math.max(0, Math.round(parsed))));
+  };
+
+  const handleSaveThresholds = () => {
+    if (!patientId) {
+      toast.error("Unable to determine patient profile.");
+      return;
+    }
+
+    if (!thresholdsFormValid) {
+      toast.error("Please fix threshold values before saving.");
+      return;
+    }
+
+    updateThresholdsMutation.mutate(
+      {
+        pressure_threshold: Math.round(pressureThresholdValue),
+        contact_area_threshold: Number(contactAreaThresholdValue.toFixed(1)),
+        duration_threshold: Math.round(durationThresholdValue),
+      },
+      {
+        onSuccess: () => {
+          setLastSavedAt(new Date().toLocaleTimeString());
+          toast.success("Thresholds updated successfully.");
+        },
+        onError: (error) => {
+          const message =
+            typeof error === "object" &&
+            error !== null &&
+            "response" in error &&
+            typeof (error as { response?: { data?: { error?: string } } })
+              .response?.data?.error === "string"
+              ? (error as { response?: { data?: { error?: string } } }).response
+                  ?.data?.error
+              : "Failed to update thresholds.";
+          toast.error(message);
+        },
+      },
+    );
+  };
+
+  return (
+    <Card className="border-zinc-200 bg-white">
+      <CardHeader>
+        <CardTitle className="text-lg text-zinc-900">
+          Pain Threshold Settings
+        </CardTitle>
+        <p className="text-sm text-zinc-600">
+          These values control patient-specific risk scoring and alerts.
+        </p>
+        <p className="text-xs text-zinc-500">
+          Changes apply to new processing and new alerts. Existing session data
+          that was already computed may not change retroactively.
+        </p>
+      </CardHeader>
+      <CardContent className="grid gap-3 md:grid-cols-3">
+        <label className="flex flex-col gap-1 text-sm text-zinc-700">
+          Pressure Threshold (1-4095)
+          <input
+            type="number"
+            min={1}
+            max={4095}
+            value={pressureThresholdInput}
+            onChange={(event) => setPressureThresholdInput(event.target.value)}
+            onBlur={clampPressureThreshold}
+            className="rounded-md border border-zinc-300 px-3 py-2"
+            disabled={loadingThresholds || updateThresholdsMutation.isPending}
+          />
+          {!pressureThresholdValid && (
+            <span className="text-xs text-red-600">
+              Enter a value between 1 and 4095.
+            </span>
+          )}
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm text-zinc-700">
+          Contact Area Threshold (0-100)
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step="0.1"
+            value={contactAreaThresholdInput}
+            onChange={(event) =>
+              setContactAreaThresholdInput(event.target.value)
+            }
+            onBlur={clampContactAreaThreshold}
+            className="rounded-md border border-zinc-300 px-3 py-2"
+            disabled={loadingThresholds || updateThresholdsMutation.isPending}
+          />
+          {!contactAreaThresholdValid && (
+            <span className="text-xs text-red-600">
+              Enter a value between 0 and 100.
+            </span>
+          )}
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm text-zinc-700">
+          Duration Threshold (seconds)
+          <input
+            type="number"
+            min={0}
+            step={1}
+            value={durationThresholdInput}
+            onChange={(event) => setDurationThresholdInput(event.target.value)}
+            onBlur={clampDurationThreshold}
+            className="rounded-md border border-zinc-300 px-3 py-2"
+            disabled={loadingThresholds || updateThresholdsMutation.isPending}
+          />
+          {!durationThresholdValid && (
+            <span className="text-xs text-red-600">
+              Enter a whole number of seconds (0 or more).
+            </span>
+          )}
+        </label>
+
+        <div className="md:col-span-3 flex items-center justify-between">
+          <span className="text-xs text-zinc-500">
+            {lastSavedAt ? `Last saved at ${lastSavedAt}` : "Not saved yet"}
+          </span>
+          <Button
+            onClick={handleSaveThresholds}
+            disabled={
+              loadingThresholds ||
+              updateThresholdsMutation.isPending ||
+              !thresholdsFormValid
+            }
+          >
+            {updateThresholdsMutation.isPending
+              ? "Saving..."
+              : "Save Thresholds"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function PatientDashboardPage() {
@@ -298,6 +511,8 @@ export default function PatientDashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      <ThresholdSettingsCard />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="border-blue-100 bg-white animate-in fade-in slide-in-from-bottom-1 duration-500">
