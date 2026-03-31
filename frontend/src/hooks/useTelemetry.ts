@@ -92,6 +92,56 @@ export type UpdatePatientThresholdsPayload = Partial<{
   duration_threshold: number;
 }>;
 
+type ComparisonDelta = {
+  diff: number;
+  percent_change: number | null;
+  direction: "up" | "down" | "same";
+};
+
+type ReportSessionSummary = {
+  id: number;
+  filename: string;
+  session_date: string;
+  duration_seconds: number;
+  avg_risk_score: number;
+  avg_peak_pressure: number;
+  avg_contact_area: number;
+  avg_pressure: number;
+};
+
+type DailyReportSummary = {
+  date: string;
+  session_count: number;
+  total_duration_seconds: number;
+  avg_risk_score: number;
+  avg_peak_pressure: number;
+  avg_contact_area: number;
+  avg_pressure: number;
+  sessions: ReportSessionSummary[];
+};
+
+export type TelemetryReportResponse = {
+  patient_id: number;
+  report_date?: string;
+  today?: DailyReportSummary | null;
+  yesterday?: DailyReportSummary | null;
+  session_a?: ReportSessionSummary;
+  session_b?: ReportSessionSummary;
+  comparison: {
+    risk_score: ComparisonDelta;
+    peak_pressure: ComparisonDelta;
+    contact_area: ComparisonDelta;
+    avg_pressure: ComparisonDelta;
+  } | null;
+};
+
+export type FetchTelemetryReportParams = {
+  date?: string;
+  patientId?: number;
+  sessionA?: number;
+  sessionB?: number;
+};
+
 async function fetchSessions(token: string): Promise<TelemetrySession[]> {
   const { data } = await axios.get(`${API_BASE}/telemetry/sessions/`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -205,6 +255,22 @@ async function updatePatientThresholds(
   return data;
 }
 
+async function fetchTelemetryReport(
+  token: string,
+  params: FetchTelemetryReportParams,
+): Promise<TelemetryReportResponse> {
+  const { data } = await axios.get(`${API_BASE}/telemetry/report/`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: {
+      ...(params.date ? { date: params.date } : {}),
+      ...(params.patientId ? { patient_id: params.patientId } : {}),
+      ...(params.sessionA ? { session_a: params.sessionA } : {}),
+      ...(params.sessionB ? { session_b: params.sessionB } : {}),
+    },
+  });
+  return data;
+}
+
 export function useTelemetrySessions() {
   const { accessToken } = useAuth();
 
@@ -302,5 +368,18 @@ export function useUpdatePatientThresholds(patientId: number | null) {
         queryKey: ["patients", "thresholds", patientId],
       });
     },
+  });
+}
+
+export function useTelemetryReport(
+  params: FetchTelemetryReportParams,
+  options?: { enabled?: boolean },
+) {
+  const { accessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["telemetry", "report", params],
+    queryFn: () => fetchTelemetryReport(accessToken!, params),
+    enabled: !!accessToken && (options?.enabled ?? true),
   });
 }
