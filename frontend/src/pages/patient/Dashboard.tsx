@@ -4,6 +4,11 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -322,7 +327,7 @@ export default function PatientDashboardPage() {
     : null;
 
   const { data: metricsData, isLoading: loadingMetrics } =
-    useTelemetrySessionMetrics(selectedSessionId);
+    useTelemetrySessionMetrics(selectedSessionId, timePeriod);
 
   const { data: heatmapData, isLoading: loadingHeatmap } =
     useTelemetrySessionHeatmap(selectedSessionId);
@@ -336,46 +341,19 @@ export default function PatientDashboardPage() {
 
   const timeline = metricsData?.timeline ?? [];
   const chartData = useMemo(() => {
-    let filteredTimeline = timeline;
-
-    // Filter by time period
-    if (timePeriod !== "all" && selectedSession) {
-      const durationSeconds = selectedSession.duration_seconds ?? 0;
-      const totalFrames = timeline.length;
-      const frameRate = totalFrames / durationSeconds;
-
-      // Calculate frame threshold based on time period
-      let timeWindowSeconds = durationSeconds;
-      if (timePeriod === "1h") {
-        timeWindowSeconds = 3600;
-      } else if (timePeriod === "6h") {
-        timeWindowSeconds = 6 * 3600;
-      } else if (timePeriod === "24h") {
-        timeWindowSeconds = 24 * 3600;
-      }
-
-      // Get frames in the last N seconds (assuming constant frame rate)
-      const framesToShow = Math.min(
-        Math.ceil(frameRate * timeWindowSeconds),
-        totalFrames,
-      );
-      const startFrame = totalFrames - framesToShow;
-      filteredTimeline = timeline.slice(Math.max(0, startFrame));
-    }
-
     const maxPoints = 600;
-    if (filteredTimeline.length <= maxPoints) {
-      return filteredTimeline.map((item) => ({
+    if (timeline.length <= maxPoints) {
+      return timeline.map((item) => ({
         frame: item.frame_number,
         peakPressure: item.peak_pressure_index,
         risk: item.risk_score,
       }));
     }
 
-    const step = Math.ceil(filteredTimeline.length / maxPoints);
+    const step = Math.ceil(timeline.length / maxPoints);
     const sampled = [];
-    for (let i = 0; i < filteredTimeline.length; i += step) {
-      const item = filteredTimeline[i];
+    for (let i = 0; i < timeline.length; i += step) {
+      const item = timeline[i];
       sampled.push({
         frame: item.frame_number,
         peakPressure: item.peak_pressure_index,
@@ -383,7 +361,38 @@ export default function PatientDashboardPage() {
       });
     }
     return sampled;
-  }, [timeline, timePeriod, selectedSession]);
+  }, [timeline]);
+
+  const riskDistributionData = useMemo(() => {
+    const bins = { low: 0, medium: 0, high: 0, veryHigh: 0 };
+
+    for (const point of chartData) {
+      if (point.risk < 3) bins.low += 1;
+      else if (point.risk < 5) bins.medium += 1;
+      else if (point.risk < 7) bins.high += 1;
+      else bins.veryHigh += 1;
+    }
+
+    return [
+      { name: "Low", value: bins.low, color: "#1e3a8a" },
+      { name: "Medium", value: bins.medium, color: "#0ea5e9" },
+      { name: "High", value: bins.high, color: "#f59e0b" },
+      { name: "Very High", value: bins.veryHigh, color: "#dc2626" },
+    ];
+  }, [chartData]);
+
+  const sessionTrendData = useMemo(() => {
+    const sortedOldestFirst = [...sessions].sort(
+      (a, b) =>
+        new Date(a.session_date).getTime() - new Date(b.session_date).getTime(),
+    );
+
+    return sortedOldestFirst.map((session) => ({
+      sessionLabel: `S${sessionNumberById[session.id] ?? session.id}`,
+      avgRisk: Number(session.averages.risk_score ?? 0),
+      avgPeakPressure: Number(session.averages.peak_pressure ?? 0),
+    }));
+  }, [sessions, sessionNumberById]);
 
   const singleFrameGrid = singleFrameData?.frames?.[0]?.data ?? null;
   const sessionHeatGrid =
@@ -573,6 +582,105 @@ export default function PatientDashboardPage() {
             <p className="mt-2 text-sm text-zinc-600">
               Computed from pressure and contact thresholds
             </p>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <Card className="border-zinc-200 bg-white">
+          <CardHeader>
+            <CardTitle className="text-lg text-zinc-900">
+              Risk Zone Distribution
+            </CardTitle>
+            <p className="text-sm text-zinc-600">
+              Share of frames by risk zone for the selected session.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={riskDistributionData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={62}
+                    outerRadius={96}
+                    paddingAngle={2}
+                  >
+                    {riskDistributionData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value, name) => [value, `${name} frames`]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-3 text-xs text-zinc-600">
+              {riskDistributionData.map((entry) => (
+                <span
+                  key={entry.name}
+                  className="inline-flex items-center gap-1"
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  {entry.name}
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-zinc-200 bg-white">
+          <CardHeader>
+            <CardTitle className="text-lg text-zinc-900">
+              Session Trend Overview
+            </CardTitle>
+            <p className="text-sm text-zinc-600">
+              Average risk and peak pressure across your sessions.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={sessionTrendData}
+                  margin={{ top: 8, right: 8, left: 8, bottom: 16 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+                  <XAxis
+                    dataKey="sessionLabel"
+                    tick={{ fill: "#71717a", fontSize: 12 }}
+                  />
+                  <YAxis tick={{ fill: "#71717a", fontSize: 12 }} />
+                  <Tooltip
+                    formatter={(value, name) => {
+                      const numeric =
+                        typeof value === "number" ? value : Number(value);
+                      if (name === "Avg Risk")
+                        return [numeric.toFixed(2), "Avg Risk (0-10)"];
+                      return [numeric.toFixed(1), "Avg Peak Pressure"];
+                    }}
+                  />
+                  <Bar
+                    dataKey="avgRisk"
+                    name="Avg Risk"
+                    fill="#8b5cf6"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="avgPeakPressure"
+                    name="Avg Peak Pressure"
+                    fill="#ef4444"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </section>

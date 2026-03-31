@@ -102,11 +102,13 @@ async function fetchSessions(token: string): Promise<TelemetrySession[]> {
 async function fetchSessionMetrics(
   token: string,
   sessionId: number,
+  period?: "1h" | "6h" | "24h" | "all",
 ): Promise<SessionMetricsResponse> {
   const { data } = await axios.get(
     `${API_BASE}/telemetry/sessions/${sessionId}/metrics/`,
     {
       headers: { Authorization: `Bearer ${token}` },
+      params: period && period !== "all" ? { period } : undefined,
     },
   );
   return data;
@@ -213,12 +215,15 @@ export function useTelemetrySessions() {
   });
 }
 
-export function useTelemetrySessionMetrics(sessionId: number | null) {
+export function useTelemetrySessionMetrics(
+  sessionId: number | null,
+  period: "1h" | "6h" | "24h" | "all" = "all",
+) {
   const { accessToken } = useAuth();
 
   return useQuery({
-    queryKey: ["telemetry", "metrics", sessionId],
-    queryFn: () => fetchSessionMetrics(accessToken!, sessionId!),
+    queryKey: ["telemetry", "metrics", sessionId, period],
+    queryFn: () => fetchSessionMetrics(accessToken!, sessionId!, period),
     enabled: !!accessToken && !!sessionId,
   });
 }

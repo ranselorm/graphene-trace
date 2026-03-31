@@ -392,7 +392,48 @@ def session_metrics(request, session_id):
     except PressureSession.DoesNotExist:
         return Response({'error': 'Session not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    metrics = FrameMetrics.objects.filter(session=session).order_by('frame_number')
+    metrics = FrameMetrics.objects.filter(session=session)
+
+    period = request.query_params.get('period')
+    start_date_param = request.query_params.get('start_date')
+    end_date_param = request.query_params.get('end_date')
+
+    # Explicit date range filtering (ISO datetime strings)
+    if start_date_param or end_date_param:
+        try:
+            start_dt = None
+            end_dt = None
+
+            if start_date_param:
+                start_dt = datetime.fromisoformat(start_date_param.replace('Z', '+00:00'))
+                if timezone.is_naive(start_dt):
+                    start_dt = timezone.make_aware(start_dt, timezone.get_current_timezone())
+
+            if end_date_param:
+                end_dt = datetime.fromisoformat(end_date_param.replace('Z', '+00:00'))
+                if timezone.is_naive(end_dt):
+                    end_dt = timezone.make_aware(end_dt, timezone.get_current_timezone())
+
+            if start_dt:
+                metrics = metrics.filter(timestamp__gte=start_dt)
+            if end_dt:
+                metrics = metrics.filter(timestamp__lte=end_dt)
+
+        except ValueError:
+            return Response(
+                {'error': 'Invalid start_date/end_date. Use ISO datetime format.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    # Relative period filtering anchored at latest frame timestamp in the session
+    elif period in {'1h', '6h', '24h'}:
+        latest_ts = metrics.order_by('-timestamp').values_list('timestamp', flat=True).first()
+        if latest_ts:
+            hours = int(period.replace('h', ''))
+            cutoff = latest_ts - timedelta(hours=hours)
+            metrics = metrics.filter(timestamp__gte=cutoff)
+
+    metrics = metrics.order_by('frame_number')
 
     data = {
         'session_id': session.id,
