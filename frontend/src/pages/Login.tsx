@@ -112,9 +112,19 @@ export function LoginPage() {
         password: "patient123",
       },
       {
-        label: "Clinician",
-        email: "clinician@demo.com",
-        password: "admin123",
+        label: "Clinician A",
+        email: "clinician1@example.com",
+        password: "clinician123",
+      },
+      {
+        label: "Clinician B",
+        email: "clinician2@example.com",
+        password: "clinician123",
+      },
+      {
+        label: "Clinician C",
+        email: "clinician3@example.com",
+        password: "clinician123",
       },
       {
         label: "Admin",
@@ -307,6 +317,12 @@ export function LoginPage() {
                       Patient CSV demo password:{" "}
                       <span className="text-zinc-600 font-bold">
                         patient123
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      Clinician demo password:{" "}
+                      <span className="text-zinc-600 font-bold">
+                        clinician123
                       </span>
                     </div>
                   </div>

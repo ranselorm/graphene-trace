@@ -95,6 +95,17 @@ function StatusBadge({ status }: { status: UserStatus }) {
   );
 }
 
+function statusFilterToSelectValue(statusFilter: UserStatus | "all") {
+  if (statusFilter === "all") return "all";
+  return statusFilter ? "active" : "disabled";
+}
+
+function selectValueToStatusFilter(value: string): UserStatus | "all" {
+  if (value === "active") return true;
+  if (value === "disabled") return false;
+  return "all";
+}
+
 function formatCreatedOnDate(value?: string | null) {
   if (!value) {
     return "Mar 11, 2026";
@@ -237,8 +248,10 @@ export function UsersToolbar({
                 <div className="space-y-2">
                   <div className="text-xs text-zinc-500">Status</div>
                   <Select
-                    // value={statusFilter}
-                    onValueChange={(v) => onStatusChange(v as any)}
+                    value={statusFilterToSelectValue(statusFilter)}
+                    onValueChange={(v) =>
+                      onStatusChange(selectValueToStatusFilter(v))
+                    }
                   >
                     <SelectTrigger className="rounded-lg">
                       <SelectValue placeholder="Status" />
@@ -546,7 +559,10 @@ export default function UsersPage() {
 
                       <div className="leading-tight">
                         <div className="font-medium text-zinc-900">
-                          {user?.username}
+                          {user?.full_name || user?.username}
+                        </div>
+                        <div className="text-xs text-zinc-500">
+                          @{user?.username}
                         </div>
                       </div>
                     </div>

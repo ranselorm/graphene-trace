@@ -171,6 +171,9 @@ export default function Assignments() {
                       {clinician.full_name || clinician.username}
                     </div>
                     <div className="text-xs text-zinc-500 truncate">
+                      {clinician.email}
+                    </div>
+                    <div className="text-xs text-zinc-500 truncate">
                       {clinician.specialty || "No specialty"}
                     </div>
                   </div>

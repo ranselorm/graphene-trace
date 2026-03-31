@@ -34,7 +34,20 @@ PressureSession = apps.get_model("telemetry", "PressureSession")
 SensorFrame = apps.get_model("telemetry", "SensorFrame")
 FrameMetrics = apps.get_model("telemetry", "FrameMetrics")
 
-CSV_DIR = Path.cwd().parent / "csv"
+def resolve_csv_dir() -> Path:
+    """Support both repository-root csv/ and backend/csv/ locations."""
+    candidates = [
+        Path.cwd().parent / "csv",
+        Path.cwd() / "csv",
+    ]
+    for candidate in candidates:
+        if candidate.exists() and candidate.is_dir():
+            return candidate
+    # Keep original default in error messaging when not found.
+    return candidates[0]
+
+
+CSV_DIR = resolve_csv_dir()
 SEED_PASSWORD = "patient123"
 FILENAME_PREFIX = "realcsv_"
 
