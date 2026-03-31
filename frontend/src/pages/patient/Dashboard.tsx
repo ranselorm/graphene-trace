@@ -84,11 +84,13 @@ function ThresholdSettingsCard() {
     Number.isFinite(pressureThresholdValue) &&
     pressureThresholdValue >= 1 &&
     pressureThresholdValue <= 4095;
+
   const contactAreaThresholdValid =
     contactAreaThresholdInput.trim() !== "" &&
     Number.isFinite(contactAreaThresholdValue) &&
     contactAreaThresholdValue >= 0 &&
     contactAreaThresholdValue <= 100;
+
   const durationThresholdValid =
     durationThresholdInput.trim() !== "" &&
     Number.isFinite(durationThresholdValue) &&
@@ -169,7 +171,7 @@ function ThresholdSettingsCard() {
   };
 
   return (
-    <Card className="border-zinc-200 bg-white">
+    <Card className="border-zinc-200 bg-white shadow-none">
       <CardHeader>
         <CardTitle className="text-lg text-zinc-900">
           Pain Threshold Settings
@@ -490,7 +492,7 @@ export default function PatientDashboardPage() {
         </div>
       </section>
 
-      <Card className="border-zinc-200 bg-white">
+      <Card className="border-zinc-200 bg-white shadow-none">
         <CardHeader>
           <CardTitle className="text-lg text-zinc-900">
             Upload New Telemetry CSV
@@ -524,7 +526,7 @@ export default function PatientDashboardPage() {
       <ThresholdSettingsCard />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-blue-100 bg-white animate-in fade-in slide-in-from-bottom-1 duration-500">
+        <Card className="border-blue-100 bg-white animate-in fade-in slide-in-from-bottom-1 duration-500 shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-zinc-600">
               Avg Peak Pressure
@@ -543,7 +545,7 @@ export default function PatientDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-cyan-100 bg-white animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <Card className="border-cyan-100 bg-white animate-in fade-in slide-in-from-bottom-2 duration-500 shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-zinc-600">
               Avg Contact Area
@@ -564,7 +566,7 @@ export default function PatientDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-violet-100 bg-white animate-in fade-in slide-in-from-bottom-3 duration-500 sm:col-span-2 lg:col-span-1">
+        <Card className="border-violet-100 bg-white animate-in fade-in slide-in-from-bottom-3 duration-500 sm:col-span-2 lg:col-span-1 shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-zinc-600">
               Avg Risk Score
@@ -587,7 +589,7 @@ export default function PatientDashboardPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-zinc-200 bg-white">
+        <Card className="border-zinc-200 bg-white shadow-none">
           <CardHeader>
             <CardTitle className="text-lg text-zinc-900">
               Risk Zone Distribution
@@ -596,6 +598,7 @@ export default function PatientDashboardPage() {
               Share of frames by risk zone for the selected session.
             </p>
           </CardHeader>
+
           <CardContent>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -618,6 +621,7 @@ export default function PatientDashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
+
             <div className="mt-2 flex flex-wrap gap-3 text-xs text-zinc-600">
               {riskDistributionData.map((entry) => (
                 <span
@@ -635,7 +639,7 @@ export default function PatientDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-zinc-200 bg-white">
+        <Card className="border-zinc-200 bg-white shadow-none">
           <CardHeader>
             <CardTitle className="text-lg text-zinc-900">
               Session Trend Overview
@@ -685,7 +689,7 @@ export default function PatientDashboardPage() {
         </Card>
       </section>
 
-      <Card className="border-zinc-200 bg-white">
+      <Card className="border-zinc-200 bg-white shadow-none">
         <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle className="text-lg text-zinc-900">
@@ -873,8 +877,8 @@ export default function PatientDashboardPage() {
         <Card
           className={
             isHeatmapFullscreen
-              ? "border-zinc-700 bg-zinc-900 min-h-[calc(100vh-2rem)]"
-              : "border-zinc-200 bg-white"
+              ? "border-zinc-700 bg-zinc-900 min-h-[calc(100vh-2rem)] shadow-none"
+              : "border-zinc-200 bg-white shadow-none"
           }
         >
           <CardHeader className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">

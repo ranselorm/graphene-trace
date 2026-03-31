@@ -94,7 +94,7 @@ export default function PatientReports() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <Card className="border-zinc-200 bg-white">
+      <Card className="border-zinc-200 bg-white shadow-none">
         <CardHeader className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <CardTitle className="text-xl text-zinc-900">
@@ -123,7 +123,7 @@ export default function PatientReports() {
       </Card>
 
       {dailyError && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-200 bg-red-50 shadow-none">
           <CardContent className="pt-6 text-sm text-red-700">
             Unable to load report for this date.
           </CardContent>
@@ -131,7 +131,7 @@ export default function PatientReports() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="border-zinc-200 bg-white">
+        <Card className="border-zinc-200 bg-white shadow-none">
           <CardHeader>
             <CardTitle className="text-lg text-zinc-900">
               Selected Day
@@ -173,7 +173,7 @@ export default function PatientReports() {
           </CardContent>
         </Card>
 
-        <Card className="border-zinc-200 bg-white">
+        <Card className="border-zinc-200 bg-white shadow-none">
           <CardHeader>
             <CardTitle className="text-lg text-zinc-900">
               Previous Day
@@ -219,7 +219,7 @@ export default function PatientReports() {
         </Card>
       </div>
 
-      <Card className="border-zinc-200 bg-white">
+      <Card className="border-zinc-200 bg-white shadow-none">
         <CardHeader>
           <CardTitle className="text-lg text-zinc-900">
             Session-to-Session Compare
@@ -272,7 +272,7 @@ export default function PatientReports() {
         </CardContent>
       </Card>
 
-      <Card className="border-zinc-200 bg-white">
+      <Card className="border-zinc-200 bg-white shadow-none">
         <CardHeader>
           <CardTitle className="text-lg text-zinc-900">
             Comparison Summary
