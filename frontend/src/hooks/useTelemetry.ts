@@ -65,6 +65,14 @@ export type UploadTelemetryResponse = {
   session_id: number;
   total_frames: number;
   duration_seconds: number;
+  alerts_generated?: Array<{
+    id: number;
+    alert_type: string;
+    severity: "high" | "medium" | "low";
+    trigger_frame: number;
+    streak_duration_seconds: number;
+    max_risk_score: number;
+  }>;
   averages: {
     peak_pressure: number;
     contact_area: number;
@@ -195,9 +203,29 @@ async function fetchSessionHeatmap(
 async function uploadTelemetryCsv(
   token: string,
   file: File,
+  thresholds?: UpdatePatientThresholdsPayload,
 ): Promise<UploadTelemetryResponse> {
   const formData = new FormData();
   formData.append("file", file);
+
+  if (thresholds?.pressure_threshold !== undefined) {
+    formData.append(
+      "pressure_threshold",
+      String(thresholds.pressure_threshold),
+    );
+  }
+  if (thresholds?.contact_area_threshold !== undefined) {
+    formData.append(
+      "contact_area_threshold",
+      String(thresholds.contact_area_threshold),
+    );
+  }
+  if (thresholds?.duration_threshold !== undefined) {
+    formData.append(
+      "duration_threshold",
+      String(thresholds.duration_threshold),
+    );
+  }
 
   const { data } = await axios.post(`${API_BASE}/telemetry/upload/`, formData, {
     headers: {
@@ -323,7 +351,10 @@ export function useUploadTelemetryCsv() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (file: File) => uploadTelemetryCsv(accessToken!, file),
+    mutationFn: async (payload: {
+      file: File;
+      thresholds?: UpdatePatientThresholdsPayload;
+    }) => uploadTelemetryCsv(accessToken!, payload.file, payload.thresholds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["telemetry", "sessions"] });
       queryClient.invalidateQueries({ queryKey: ["telemetry", "metrics"] });

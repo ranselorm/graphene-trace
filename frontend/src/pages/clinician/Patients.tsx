@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import { useAuth } from "@/context/authContext";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -14,23 +13,61 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type UnassignedPatient = {
+type AssignedPatient = {
   id: number;
   full_name: string;
   email: string;
   risk_category: string;
 };
 
-const Patients = () => {
-  const { accessToken } = useAuth();
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+type ClinicianDetails = {
+  id: number;
+  full_name: string;
+  email: string;
+  specialty: string;
+  assigned_patients: AssignedPatient[];
+  assigned_patients_count: number;
+};
 
-  const { data: unassigned = [] } = useQuery<UnassignedPatient[]>({
-    queryKey: ["patients", "unassigned"],
-    enabled: !!accessToken,
+function riskBadge(risk: string) {
+  if (risk === "high") {
+    return (
+      <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100">
+        High
+      </Badge>
+    );
+  }
+  if (risk === "medium") {
+    return (
+      <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+        Medium
+      </Badge>
+    );
+  }
+  return (
+    <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+      Low
+    </Badge>
+  );
+}
+
+const Patients = () => {
+  const { accessToken, session } = useAuth();
+  const clinicianId = session?.user?.id as number | undefined;
+  const [riskFilter, setRiskFilter] = useState<
+    "all" | "high" | "medium" | "low"
+  >("all");
+
+  const {
+    data: clinicianDetails,
+    isLoading,
+    error,
+  } = useQuery<ClinicianDetails>({
+    queryKey: ["clinician", "details", clinicianId],
+    enabled: !!accessToken && !!clinicianId,
     queryFn: async () => {
       const { data } = await axios.get(
-        `${import.meta.env.VITE_BASE_URL}/patients/unassigned/`,
+        `${import.meta.env.VITE_BASE_URL}/clinicians/${clinicianId}/`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         },
@@ -39,57 +76,124 @@ const Patients = () => {
     },
   });
 
-  const hasUnassignedPatients = unassigned.length > 0;
-  const canAssign = hasUnassignedPatients && !!selectedPatientId;
+  const assignedPatients = clinicianDetails?.assigned_patients ?? [];
 
-  const selectedPatient = useMemo(
-    () =>
-      unassigned.find((patient) => String(patient.id) === selectedPatientId),
-    [unassigned, selectedPatientId],
-  );
+  const filteredPatients = useMemo(() => {
+    if (riskFilter === "all") return assignedPatients;
+    return assignedPatients.filter(
+      (patient) => patient.risk_category === riskFilter,
+    );
+  }, [assignedPatients, riskFilter]);
+
+  const counts = useMemo(() => {
+    return {
+      total: assignedPatients.length,
+      high: assignedPatients.filter(
+        (patient) => patient.risk_category === "high",
+      ).length,
+      medium: assignedPatients.filter(
+        (patient) => patient.risk_category === "medium",
+      ).length,
+      low: assignedPatients.filter((patient) => patient.risk_category === "low")
+        .length,
+    };
+  }, [assignedPatients]);
 
   return (
-    <div className="container mx-auto space-y-6">
-      <Card className="border-zinc-200 bg-white">
+    <div className="space-y-6">
+      <Card className="border-zinc-200 bg-white shadow-none">
         <CardHeader>
-          <CardTitle className="text-lg text-zinc-900">
-            Assign Patient
-          </CardTitle>
+          <CardTitle className="text-lg text-zinc-900">My Patients</CardTitle>
+          <p className="text-sm text-zinc-600">
+            View patients currently assigned to your clinician account.
+          </p>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Select
-            value={selectedPatientId}
-            onValueChange={setSelectedPatientId}
-            disabled={!hasUnassignedPatients}
-          >
-            <SelectTrigger className="w-full md:w-90">
-              <SelectValue placeholder="Select unassigned patient" />
-            </SelectTrigger>
-            <SelectContent>
-              {unassigned.map((patient) => (
-                <SelectItem key={patient.id} value={String(patient.id)}>
-                  {patient.full_name} ({patient.risk_category})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button
-            disabled={!canAssign}
-            onClick={() => {
-              if (!selectedPatient) return;
-              toast.info(
-                `Selected ${selectedPatient.full_name}. Assignment action can be wired to your clinician workflow endpoint.`,
-              );
-            }}
-          >
-            Assign Patient
-          </Button>
-
-          {!hasUnassignedPatients && (
+        <CardContent>
+          {isLoading ? (
             <p className="text-sm text-zinc-500">
-              No unassigned patients available right now.
+              Loading assigned patients...
             </p>
+          ) : error ? (
+            <p className="text-sm text-rose-600">
+              Unable to load clinician patients right now.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-lg border border-zinc-200 p-3">
+                  <p className="text-xs text-zinc-500">Total Assigned</p>
+                  <p className="text-2xl font-semibold text-zinc-900">
+                    {counts.total}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-zinc-200 p-3">
+                  <p className="text-xs text-zinc-500">High Risk</p>
+                  <p className="text-2xl font-semibold text-rose-700">
+                    {counts.high}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-zinc-200 p-3">
+                  <p className="text-xs text-zinc-500">Medium Risk</p>
+                  <p className="text-2xl font-semibold text-amber-700">
+                    {counts.medium}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-zinc-200 p-3">
+                  <p className="text-xs text-zinc-500">Low Risk</p>
+                  <p className="text-2xl font-semibold text-emerald-700">
+                    {counts.low}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-zinc-600">
+                  {clinicianDetails?.full_name} (
+                  {clinicianDetails?.specialty || "No specialty"})
+                </p>
+                <Select
+                  value={riskFilter}
+                  onValueChange={(value) =>
+                    setRiskFilter(value as "all" | "high" | "medium" | "low")
+                  }
+                >
+                  <SelectTrigger className="w-44">
+                    <SelectValue placeholder="Risk Filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Risks</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {filteredPatients.length === 0 ? (
+                <p className="text-sm text-zinc-500">
+                  No assigned patients for this risk filter.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {filteredPatients.map((patient) => (
+                    <div
+                      key={patient.id}
+                      className="rounded-lg border border-zinc-200 p-3 flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-zinc-900 truncate">
+                          {patient.full_name}
+                        </p>
+                        <p className="text-xs text-zinc-500 truncate">
+                          {patient.email}
+                        </p>
+                      </div>
+                      {riskBadge(patient.risk_category)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>

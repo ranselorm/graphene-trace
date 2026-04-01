@@ -1,6 +1,5 @@
 import MetricsCard from "@/components/admin/MetricsCard";
 import { AlertsTrendChart } from "@/components/admin/AlertsTrendChart";
-import { alertsTrend7Days, alertsTrendMonth } from "@/constants";
 import { CommentsToReviewTrendChart } from "@/components/clinician/CommentsToReviewTrendChart";
 import { ReportsGeneratedTrendChart } from "@/components/clinician/ReportsGeneratedTrendChart";
 import { ClinicalQueueFocusChart } from "@/components/clinician/ClinicalQueueFocusChart";
@@ -12,40 +11,35 @@ export default function ClinicianOverviewPage() {
   const newAlerts = overviewData?.alerts?.by_status?.new ?? 0;
   const resolvedAlerts = overviewData?.alerts?.by_status?.resolved ?? 0;
   const assignedPatients = overviewData?.assignments?.assigned ?? 0;
+  const reportsGenerated = overviewData?.reports?.generated ?? 0;
   const pendingPatientComments =
     overviewData?.comments?.pending_patient_comments ??
     overviewData?.comments?.pending ??
     0;
 
-  const commentsTrendData = overviewData?.comments?.trend_7d?.map(
-    (entry: any) => ({
+  const alertsTrend7d =
+    overviewData?.trends?.alerts_7d?.map((entry: any) => ({
       day: entry?.day ?? "-",
-      value: entry?.count ?? 0,
-    }),
-  ) ?? [
-    { day: "Mon", value: 6 },
-    { day: "Tue", value: 4 },
-    { day: "Wed", value: 5 },
-    { day: "Thu", value: 3 },
-    { day: "Fri", value: 4 },
-    { day: "Sat", value: 2 },
-    { day: "Sun", value: 3 },
-  ];
+      alerts: entry?.count ?? 0,
+    })) ?? [];
 
-  const reportsTrendData = overviewData?.reports?.generated_trend_7d?.map(
-    (entry: any) => ({
+  const alertsTrend1m =
+    overviewData?.trends?.alerts_1m?.map((entry: any) => ({
+      day: entry?.day ?? "-",
+      alerts: entry?.count ?? 0,
+    })) ?? [];
+
+  const commentsTrendData =
+    overviewData?.comments?.trend_7d?.map((entry: any) => ({
       day: entry?.day ?? "-",
       value: entry?.count ?? 0,
-    }),
-  ) ?? [
-    { day: "Mon", value: 1 },
-    { day: "Tue", value: 2 },
-    { day: "Wed", value: 1 },
-    { day: "Thu", value: 3 },
-    { day: "Fri", value: 2 },
-    { day: "Sat", value: 1 },
-    { day: "Sun", value: 2 },
-  ];
+    })) ?? [];
+
+  const reportsTrendData =
+    overviewData?.reports?.generated_trend_7d?.map((entry: any) => ({
+      day: entry?.day ?? "-",
+      value: entry?.count ?? 0,
+    })) ?? [];
 
   return (
     <div>
@@ -54,28 +48,28 @@ export default function ClinicianOverviewPage() {
           <MetricsCard
             label="My Active Patients"
             value={assignedPatients}
-            change={6}
+            change={0}
             icon="material-symbols-light:recent-patient-outline-rounded"
             tone="blue"
           />
           <MetricsCard
             label="New Alerts"
             value={newAlerts}
-            change={4}
+            change={0}
             icon="fluent:alert-24-regular"
             tone="amber"
           />
           <MetricsCard
             label="Comments"
             value={pendingPatientComments}
-            change={1}
+            change={0}
             icon="mdi:comment-processing-outline"
             tone="emerald"
           />
           <MetricsCard
             label="Reports"
-            value={resolvedAlerts}
-            change={9}
+            value={reportsGenerated}
+            change={0}
             icon="mdi:check-decagram-outline"
             tone="violet"
           />
@@ -83,14 +77,14 @@ export default function ClinicianOverviewPage() {
 
         <div className="grid gap-4 lg:grid-cols-2 items-start">
           <AlertsTrendChart
-            data7Days={alertsTrend7Days}
-            dataMonth={alertsTrendMonth}
+            data7Days={alertsTrend7d}
+            dataMonth={alertsTrend1m}
           />
           <ClinicalQueueFocusChart
             assignedPatients={assignedPatients}
             newAlerts={newAlerts}
             pendingComments={pendingPatientComments}
-            reportsGenerated={resolvedAlerts}
+            reportsGenerated={reportsGenerated}
           />
           <CommentsToReviewTrendChart data={commentsTrendData} />
           <ReportsGeneratedTrendChart data={reportsTrendData} />

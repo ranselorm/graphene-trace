@@ -33,6 +33,13 @@ class AlertViewSet(viewsets.ModelViewSet):
         - /api/alerts/?patient=5
         """
         queryset = super().get_queryset()
+        user = self.request.user
+
+        # Role-scoped visibility.
+        if getattr(user, 'role', None) == 'clinician':
+            queryset = queryset.filter(patient__clinician=user)
+        elif getattr(user, 'role', None) == 'patient':
+            queryset = queryset.filter(patient__patient=user)
         
         # Filter by severity
         severity = self.request.query_params.get('severity', None)

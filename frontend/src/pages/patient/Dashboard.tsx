@@ -268,6 +268,10 @@ function ThresholdSettingsCard() {
 }
 
 export default function PatientDashboardPage() {
+  const { session } = useAuth();
+  const patientId = session?.user?.id ?? null;
+  const { data: uploadThresholds } = usePatientThresholds(patientId);
+
   const { data: sessions = [], isLoading: loadingSessions } =
     useTelemetrySessions();
 
@@ -289,6 +293,7 @@ export default function PatientDashboardPage() {
   );
   const [isHeatmapFullscreen, setIsHeatmapFullscreen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [applyThresholdsOnUpload, setApplyThresholdsOnUpload] = useState(true);
   const [timePeriod, setTimePeriod] = useState<"1h" | "6h" | "24h" | "all">(
     "all",
   );
@@ -436,25 +441,48 @@ export default function PatientDashboardPage() {
       return;
     }
 
-    uploadMutation.mutate(selectedFile, {
-      onSuccess: (data) => {
-        setSelectedSessionId(data.session_id);
-        setSelectedFile(null);
-        toast.success("CSV uploaded and processed successfully.");
+    const thresholdsForUpload =
+      applyThresholdsOnUpload && uploadThresholds
+        ? {
+            pressure_threshold: Math.round(uploadThresholds.pressure_threshold),
+            contact_area_threshold: Number(
+              uploadThresholds.contact_area_threshold.toFixed(1),
+            ),
+            duration_threshold: Math.round(uploadThresholds.duration_threshold),
+          }
+        : undefined;
+
+    uploadMutation.mutate(
+      { file: selectedFile, thresholds: thresholdsForUpload },
+      {
+        onSuccess: (data) => {
+          const generatedAlerts = data.alerts_generated ?? [];
+          console.log("[Telemetry Upload] Result:", {
+            sessionId: data.session_id,
+            totalFrames: data.total_frames,
+            durationSeconds: data.duration_seconds,
+            alertsGeneratedCount: generatedAlerts.length,
+            alertsGenerated: generatedAlerts,
+          });
+
+          setSelectedSessionId(data.session_id);
+          setSelectedFile(null);
+          toast.success("CSV uploaded and processed successfully.");
+        },
+        onError: (error) => {
+          const message =
+            typeof error === "object" &&
+            error !== null &&
+            "response" in error &&
+            typeof (error as { response?: { data?: { error?: string } } })
+              .response?.data?.error === "string"
+              ? (error as { response?: { data?: { error?: string } } }).response
+                  ?.data?.error
+              : "Upload failed. Please try again.";
+          toast.error(message);
+        },
       },
-      onError: (error) => {
-        const message =
-          typeof error === "object" &&
-          error !== null &&
-          "response" in error &&
-          typeof (error as { response?: { data?: { error?: string } } })
-            .response?.data?.error === "string"
-            ? (error as { response?: { data?: { error?: string } } }).response
-                ?.data?.error
-            : "Upload failed. Please try again.";
-        toast.error(message);
-      },
-    });
+    );
   };
 
   return (
@@ -497,8 +525,12 @@ export default function PatientDashboardPage() {
           <CardTitle className="text-lg text-zinc-900">
             Upload New Telemetry CSV
           </CardTitle>
+          <p className="text-sm text-zinc-600">
+            Optionally apply your saved thresholds in the same upload request so
+            alerts are computed with those values immediately.
+          </p>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center">
+        <CardContent className="flex flex-col gap-3">
           <input
             type="file"
             accept=".csv,text/csv"
@@ -508,18 +540,31 @@ export default function PatientDashboardPage() {
             }}
             className="block w-full text-sm text-zinc-700 file:mr-3 file:rounded-md file:border file:border-zinc-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:text-zinc-700"
           />
-          <Button
-            onClick={handleUpload}
-            disabled={!selectedFile || uploadMutation.isPending}
-            className="md:w-auto w-full"
-          >
-            {uploadMutation.isPending ? "Uploading..." : "Upload CSV"}
-          </Button>
-          {selectedFile && (
-            <span className="text-xs text-zinc-500 truncate">
-              Selected: {selectedFile.name}
-            </span>
-          )}
+          <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              checked={applyThresholdsOnUpload}
+              onChange={(event) =>
+                setApplyThresholdsOnUpload(event.target.checked)
+              }
+              className="h-4 w-4"
+            />
+            Apply saved thresholds during this upload
+          </label>
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            <Button
+              onClick={handleUpload}
+              disabled={!selectedFile || uploadMutation.isPending}
+              className="md:w-auto w-full"
+            >
+              {uploadMutation.isPending ? "Uploading..." : "Upload CSV"}
+            </Button>
+            {selectedFile && (
+              <span className="text-xs text-zinc-500 truncate">
+                Selected: {selectedFile.name}
+              </span>
+            )}
+          </div>
         </CardContent>
       </Card>
 

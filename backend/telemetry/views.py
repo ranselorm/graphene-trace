@@ -32,6 +32,14 @@ RISK_LOW_THRESHOLD = 3.0        # risk_score >= 3 starts a danger streak
 RISK_MEDIUM_THRESHOLD = 5.0     # risk_score >= 5 → medium severity
 RISK_HIGH_THRESHOLD = 7.0       # risk_score >= 7 → high severity
 
+# Temporary toggle for demo/testing. Set to False to restore strict production behavior.
+FORCE_ALERT_TEST_MODE = False
+
+# Easier trigger settings used only when FORCE_ALERT_TEST_MODE is enabled.
+TEST_RISK_LOW_THRESHOLD = 0.1
+TEST_MIN_STREAK_FRAMES = 5
+TEST_COOLDOWN_FRAMES = 14
+
 
 def compute_frame_metrics(frame_data, patient_profile):
     """
@@ -116,13 +124,19 @@ def determine_alert_type(metrics_in_streak, patient_profile):
     return 'elevated_risk'
 
 
-def check_and_generate_alerts(session, patient_profile):
+def check_and_generate_alerts(
+    session,
+    patient_profile,
+    risk_low_threshold=RISK_LOW_THRESHOLD,
+    min_streak_frames=MIN_STREAK_FRAMES,
+    cooldown_frames=COOLDOWN_FRAMES,
+):
     """
     Walk through a session's frame metrics and generate alerts using bouncing logic.
     
-    - A "danger streak" starts when risk_score >= RISK_LOW_THRESHOLD (3.0)
-    - An alert is created when the streak lasts >= MIN_STREAK_FRAMES (70 = 5 seconds)
-    - After an alert, a cooldown of COOLDOWN_FRAMES (140 = 10 seconds) of safe frames
+        - A "danger streak" starts when risk_score >= risk_low_threshold
+        - An alert is created when the streak lasts >= min_streak_frames
+        - After an alert, a cooldown of cooldown_frames of safe frames
       must pass before a new alert can trigger
     - Severity is based on the peak risk_score during the streak
     """
@@ -150,7 +164,7 @@ def check_and_generate_alerts(session, patient_profile):
             max_risk_in_streak = 0.0
             continue
 
-        if m.risk_score >= RISK_LOW_THRESHOLD:
+        if m.risk_score >= risk_low_threshold:
             # In danger zone
             if streak_start is None:
                 streak_start = i
@@ -163,7 +177,7 @@ def check_and_generate_alerts(session, patient_profile):
             streak_length = i - streak_start + 1
 
             # Check if streak is long enough to trigger an alert
-            if streak_length >= MIN_STREAK_FRAMES:
+            if streak_length >= min_streak_frames:
                 severity = determine_severity(max_risk_in_streak)
                 alert_type = determine_alert_type(streak_metrics, patient_profile)
                 trigger_frame = metrics[streak_start].sensor_frame
@@ -185,7 +199,7 @@ def check_and_generate_alerts(session, patient_profile):
                 })
 
                 # Enter cooldown
-                cooldown_remaining = COOLDOWN_FRAMES
+                cooldown_remaining = cooldown_frames
                 streak_start = None
                 streak_metrics = []
                 max_risk_in_streak = 0.0
@@ -224,6 +238,67 @@ def upload_csv(request):
             {'error': 'No patient profile found for this user'},
             status=status.HTTP_404_NOT_FOUND
         )
+
+    # Optional: allow threshold updates in the same multipart upload request.
+    pressure_threshold_raw = request.data.get('pressure_threshold')
+    contact_area_threshold_raw = request.data.get('contact_area_threshold')
+    duration_threshold_raw = request.data.get('duration_threshold')
+
+    if pressure_threshold_raw is not None:
+        try:
+            pressure_threshold = int(pressure_threshold_raw)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'pressure_threshold must be an integer between 1 and 4095'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not 1 <= pressure_threshold <= 4095:
+            return Response(
+                {'error': 'pressure_threshold must be between 1 and 4095'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        patient_profile.pressure_threshold = pressure_threshold
+
+    if contact_area_threshold_raw is not None:
+        try:
+            contact_area_threshold = float(contact_area_threshold_raw)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'contact_area_threshold must be a number between 0 and 100'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not 0 <= contact_area_threshold <= 100:
+            return Response(
+                {'error': 'contact_area_threshold must be between 0 and 100'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        patient_profile.contact_area_threshold = contact_area_threshold
+
+    if duration_threshold_raw is not None:
+        try:
+            duration_threshold = int(duration_threshold_raw)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'duration_threshold must be an integer greater than or equal to 0'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if duration_threshold < 0:
+            return Response(
+                {'error': 'duration_threshold must be greater than or equal to 0'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        patient_profile.duration_threshold = duration_threshold
+
+    if (
+        pressure_threshold_raw is not None
+        or contact_area_threshold_raw is not None
+        or duration_threshold_raw is not None
+    ):
+        patient_profile.save(update_fields=[
+            'pressure_threshold',
+            'contact_area_threshold',
+            'duration_threshold',
+        ])
 
     # Read and parse CSV
     try:
@@ -324,8 +399,17 @@ def upload_csv(request):
         session.avg_risk_score = round(metric_sums['risk'] / total_frames, 2)
         session.save()
 
-    # Auto-generate alerts based on bouncing threshold logic
-    alerts_generated = check_and_generate_alerts(session, patient_profile)
+    # Auto-generate alerts based on bouncing threshold logic.
+    if FORCE_ALERT_TEST_MODE:
+        alerts_generated = check_and_generate_alerts(
+            session,
+            patient_profile,
+            risk_low_threshold=TEST_RISK_LOW_THRESHOLD,
+            min_streak_frames=TEST_MIN_STREAK_FRAMES,
+            cooldown_frames=TEST_COOLDOWN_FRAMES,
+        )
+    else:
+        alerts_generated = check_and_generate_alerts(session, patient_profile)
 
     return Response({
         'message': 'CSV uploaded and processed successfully',
@@ -339,6 +423,7 @@ def upload_csv(request):
             'risk_score': session.avg_risk_score,
         },
         'alerts_generated': alerts_generated,
+        'alert_test_mode': FORCE_ALERT_TEST_MODE,
     }, status=status.HTTP_201_CREATED)
 
 
