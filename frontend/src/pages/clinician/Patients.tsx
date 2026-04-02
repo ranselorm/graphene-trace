@@ -12,6 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  PatientDetailSheet,
+  type ClinicianPatient,
+} from "@/components/clinician/PatientDetailSheet";
 
 type AssignedPatient = {
   id: number;
@@ -57,6 +61,9 @@ const Patients = () => {
   const [riskFilter, setRiskFilter] = useState<
     "all" | "high" | "medium" | "low"
   >("all");
+  const [selectedPatient, setSelectedPatient] =
+    useState<ClinicianPatient | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const {
     data: clinicianDetails,
@@ -98,6 +105,11 @@ const Patients = () => {
         .length,
     };
   }, [assignedPatients]);
+
+  const handlePatientClick = (patient: AssignedPatient) => {
+    setSelectedPatient(patient);
+    setDetailOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -178,7 +190,16 @@ const Patients = () => {
                   {filteredPatients.map((patient) => (
                     <div
                       key={patient.id}
-                      className="rounded-lg border border-zinc-200 p-3 flex items-center justify-between gap-3"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handlePatientClick(patient)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          handlePatientClick(patient);
+                        }
+                      }}
+                      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-zinc-200 p-3 transition hover:border-zinc-300 hover:bg-zinc-50"
                     >
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-zinc-900 truncate">
@@ -197,6 +218,12 @@ const Patients = () => {
           )}
         </CardContent>
       </Card>
+
+      <PatientDetailSheet
+        patient={selectedPatient}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
     </div>
   );
 };
