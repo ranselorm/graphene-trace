@@ -8,5 +8,6 @@ urlpatterns = [
     path('sessions/<int:session_id>/metrics/', views.session_metrics, name='telemetry-session-metrics'),
     path('sessions/<int:session_id>/frames/', views.session_frames, name='telemetry-session-frames'),
     path('sessions/<int:session_id>/heatmap/', views.session_heatmap, name='telemetry-session-heatmap'),
-    path('report/', views.session_report, name='telemetry-report'),
+    path('report/<int:session_id>/', views.session_report, name='session_report'),
+    path('report/compare/', views.compare, name='compare'),
 ]

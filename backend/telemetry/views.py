@@ -677,144 +677,98 @@ def reset_telemetry(request):
     
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def session_report(request):
-    """
-    Generate a report comparing today's sessions to yesterday's.
-    GET /api/telemetry/report/?patient_id=X&date=2026-03-25
-    If no date provided, uses today.
-    """
-    patient_id = request.query_params.get('patient_id')
-    date_str = request.query_params.get('date')
+def session_report(request, session_id):
+    try:
+        session =PressureSession.objects.get(id = session_id)
+    except PressureSession.DoesNotExist:
+        return Response({'error': 'Session not found'}, status=status.HTTP_404_NOT_FOUND)
+    
 
-    # Resolve patient
-    if patient_id:
-        try:
-            patient_profile = PatientProfile.objects.get(pk=patient_id)
-        except PatientProfile.DoesNotExist:
-            return Response({'error': 'Patient not found'}, status=status.HTTP_404_NOT_FOUND)
-    else:
-        try:
-            patient_profile = PatientProfile.objects.get(patient=request.user)
-        except PatientProfile.DoesNotExist:
-            return Response({'error': 'No patient profile found'}, status=status.HTTP_404_NOT_FOUND)
+    frame_metrics = FrameMetrics.objects.filter(session = session).order_by('frame_number')
 
-    # Resolve target date
-    if date_str:
-        try:
-            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        except ValueError:
-            return Response({'error': 'Invalid date format, use YYYY-MM-DD'}, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        target_date = timezone.now().date()
+    highest_risk = frame_metrics.order_by('-risk_score').first()
+    lowest_risk = frame_metrics.order_by('risk_score').first()
 
-    yesterday = target_date - timedelta(days=1)
+    pressure_over_time = list(frame_metrics.values('frame_number', 'timestamp', 'peak_pressure_index', 'average_pressure', 'risk_score'))
 
-    # If two specific sessions are requested, compare those directly
-    session_a_id = request.query_params.get('session_a')
-    session_b_id = request.query_params.get('session_b')
-
-    if session_a_id and session_b_id:
-        try:
-            session_a = PressureSession.objects.get(id=session_a_id)
-            session_b = PressureSession.objects.get(id=session_b_id)
-        except PressureSession.DoesNotExist:
-            return Response({'error': 'One or both sessions not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        def session_to_dict(s):
-            return {
-                'id': s.id,
-                'filename': s.filename,
-                'session_date': s.session_date,
-                'duration_seconds': s.duration_seconds,
-                'avg_risk_score': s.avg_risk_score,
-                'avg_peak_pressure': s.avg_peak_pressure,
-                'avg_contact_area': s.avg_contact_area,
-                'avg_pressure': s.avg_pressure,
-            }
-
-        def delta(a_val, b_val):
-            a_val = a_val or 0
-            b_val = b_val or 0
-            diff = round(a_val - b_val, 2)
-            pct = round((diff / b_val) * 100, 1) if b_val != 0 else None
-            return {'diff': diff, 'percent_change': pct, 'direction': 'up' if diff > 0 else 'down' if diff < 0 else 'same'}
-
-        comparison = {
-            'risk_score': delta(session_a.avg_risk_score, session_b.avg_risk_score),
-            'peak_pressure': delta(session_a.avg_peak_pressure, session_b.avg_peak_pressure),
-            'contact_area': delta(session_a.avg_contact_area, session_b.avg_contact_area),
-            'avg_pressure': delta(session_a.avg_pressure, session_b.avg_pressure),
+    return Response(
+        {
+        'session_id': session.id,
+        'filename': session.filename,
+        'session_date': session.session_date,
+        'duration_seconds': session.duration_seconds,
+        'total_frames': session.total_frames,
+        'avg_peak_pressure': session.avg_peak_pressure,
+        'avg_contact_area': session.avg_contact_area,
+        'avg_pressure': session.avg_pressure,
+        'avg_risk_score': session.avg_risk_score,
+        'highest_risk_frame':{
+            'frame_number':highest_risk.frame_number,
+            'risk_score':highest_risk.risk_score,
+            'peak_pressure':highest_risk.peak_pressure_index,
+        } if highest_risk else None,
+        'lowest_risk_frame':{
+            'frame_number':lowest_risk.frame_number,
+            'risk_score':lowest_risk.risk_score,
+            'peak_pressure':lowest_risk.peak_pressure_index
         }
+        #get all the frames 
+        if lowest_risk else None,
+        'pressure_over_time': pressure_over_time
 
-        return Response({
-            'patient_id': patient_profile.pk,
-            'session_a': session_to_dict(session_a),
-            'session_b': session_to_dict(session_b),
-            'comparison': comparison,
-        }, status=status.HTTP_200_OK)
-
-    def get_day_stats(date):
-        sessions = PressureSession.objects.filter(
-            patient=patient_profile,
-            session_date__date=date
-        )
-        if not sessions.exists():
-            return None
-
-        aggregated = sessions.aggregate(
-            avg_risk=Avg('avg_risk_score'),
-            avg_peak=Avg('avg_peak_pressure'),
-            avg_contact=Avg('avg_contact_area'),
-            avg_pressure=Avg('avg_pressure'),
-        )
-
-        return {
-            'date': str(date),
-            'session_count': sessions.count(),
-            'total_duration_seconds': sum(s.duration_seconds or 0 for s in sessions),
-            'avg_risk_score': round(aggregated['avg_risk'] or 0, 2),
-            'avg_peak_pressure': round(aggregated['avg_peak'] or 0, 2),
-            'avg_contact_area': round(aggregated['avg_contact'] or 0, 2),
-            'avg_pressure': round(aggregated['avg_pressure'] or 0, 2),
-            'sessions': [
-                {
-                    'id': s.id,
-                    'filename': s.filename,
-                    'session_date': s.session_date,
-                    'duration_seconds': s.duration_seconds,
-                    'avg_risk_score': s.avg_risk_score,
-                    'avg_peak_pressure': s.avg_peak_pressure,
-                    'avg_contact_area': s.avg_contact_area,
-                    'avg_pressure': s.avg_pressure,
-                }
-                for s in sessions.order_by('session_date')
-            ]
-        }
-
-    today_stats = get_day_stats(target_date)
-    yesterday_stats = get_day_stats(yesterday)
-
-    # Build comparison if both days have data
-    comparison = None
-    if today_stats and yesterday_stats:
-        def delta(today_val, yesterday_val):
-            diff = round(today_val - yesterday_val, 2)
-            pct = round((diff / yesterday_val) * 100, 1) if yesterday_val != 0 else None
-            return {'diff': diff, 'percent_change': pct, 'direction': 'up' if diff > 0 else 'down' if diff < 0 else 'same'}
-
-        comparison = {
-            'risk_score': delta(today_stats['avg_risk_score'], yesterday_stats['avg_risk_score']),
-            'peak_pressure': delta(today_stats['avg_peak_pressure'], yesterday_stats['avg_peak_pressure']),
-            'contact_area': delta(today_stats['avg_contact_area'], yesterday_stats['avg_contact_area']),
-            'avg_pressure': delta(today_stats['avg_pressure'], yesterday_stats['avg_pressure']),
-        }
-
-    return Response({
-        'patient_id': patient_profile.pk,
-        'report_date': str(target_date),
-        'today': today_stats,
-        'yesterday': yesterday_stats,
-        'comparison': comparison,
     }, status=status.HTTP_200_OK)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def compare(request):
+    session_a_id = request.query_params.get('session_a')
+    session_b_id = request.query_params.get('session_b')
+
+    if not session_a_id or not session_b_id:
+        return Response({'error': 'There needs to be two sessions'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        session_a = PressureSession.objects.get(id = session_a_id)
+        session_b = PressureSession.objects.get(id = session_b_id)
+    except:
+        return Response({'error': 'A session is not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    def session_to_dict(session):
+        return {
+        'session_id': session.id,
+        'filename': session.filename,
+        'session_date': session.session_date,
+        'duration_seconds': session.duration_seconds,
+        'total_frames': session.total_frames,
+        'avg_peak_pressure': session.avg_peak_pressure,
+        'avg_contact_area': session.avg_contact_area,
+        'avg_pressure': session.avg_pressure,
+        'avg_risk_score': session.avg_risk_score,
+        }
+
+    def delta(a_val, b_val):
+        a_val = a_val or 0
+        b_val = b_val or 0
+
+        diff = round(a_val - b_val, 2)
+        pct = round((diff/b_val)*100,1) if b_val!= 0 else None
+        return {
+            'diff': diff,
+            'pct':pct,
+            'direction': 'up' if diff>0 else 'down' if diff<0 else 'same'
+        }
+
+    comparison = {
+        'risk_score': delta(session_a.avg_risk_score, session_b.avg_risk_score),
+        'peak_pressure':delta(session_a.avg_peak_pressure, session_b.avg_peak_pressure),
+        'avg_pressure':delta(session_a.avg_pressure, session_b.avg_pressure),
+        'avg_contact_area': delta(session_a.avg_contact_area, session_b.avg_contact_area),
+    }
+    return Response({
+
+        "session a data": session_to_dict(session_a),
+        "session b data": session_to_dict(session_b),
+        "comparison": comparison,
+        }, status =  status.HTTP_200_OK
+        )
