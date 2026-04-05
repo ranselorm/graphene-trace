@@ -195,9 +195,6 @@ export function LoginPage() {
                   <CardTitle className="text-xl md:text-2xl">
                     Welcome back to Graphene Trace
                   </CardTitle>
-                  <CardDescription className="text-zinc-800">
-                    Using demo accounts for now. Backend auth comes later.
-                  </CardDescription>
                 </CardHeader>
 
                 <CardContent>
@@ -293,9 +290,7 @@ export function LoginPage() {
                   </form>
 
                   <div className="mt-5 rounded-lg border border-zinc-300 p-3">
-                    <div className="text-xs text-zinc-800 mb-2">
-                      Demo accounts
-                    </div>
+                    <div className="text-xs text-zinc-800 mb-2">Accounts</div>
                     <div className="flex flex-wrap gap-2">
                       {demoHints.map((d) => (
                         <Button
