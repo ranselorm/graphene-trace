@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -61,12 +61,15 @@ function statusBadge(status: AlertItem["status"]) {
 }
 
 export default function Alerts() {
+  const PAGE_SIZE = 10;
+
   const [severityFilter, setSeverityFilter] = useState<
     "all" | "high" | "medium" | "low"
   >("all");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "new" | "reviewed" | "resolved"
   >("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data, isLoading, error } = useAlerts({
     severity: severityFilter,
@@ -76,6 +79,16 @@ export default function Alerts() {
   const resolvedMutation = useMarkAlertResolved();
 
   const alerts = data?.alerts ?? [];
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [severityFilter, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(alerts.length / PAGE_SIZE));
+  const paginatedAlerts = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    return alerts.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [alerts, currentPage]);
 
   const counts = useMemo(() => {
     return {
@@ -194,7 +207,7 @@ export default function Alerts() {
             </p>
           ) : (
             <div className="space-y-3">
-              {alerts.map((alert) => (
+              {paginatedAlerts.map((alert) => (
                 <div
                   key={alert.id}
                   className="rounded-lg border border-zinc-200 p-3"
@@ -245,6 +258,39 @@ export default function Alerts() {
                   </div>
                 </div>
               ))}
+
+              <div className="flex flex-col gap-2 border-t border-zinc-200 pt-3 text-sm text-zinc-600 md:flex-row md:items-center md:justify-between">
+                <span>
+                  Showing {(currentPage - 1) * PAGE_SIZE + 1}-
+                  {Math.min(currentPage * PAGE_SIZE, alerts.length)} of{" "}
+                  {alerts.length}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span>
+                    Page {currentPage} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>

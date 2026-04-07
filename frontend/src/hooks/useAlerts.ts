@@ -21,6 +21,7 @@ export type AlertItem = {
 type AlertsQueryFilters = {
   severity?: "high" | "medium" | "low" | "all";
   status?: "new" | "reviewed" | "resolved" | "all";
+  patient?: number;
 };
 
 const fetchAlerts = async (
@@ -38,6 +39,7 @@ const fetchAlerts = async (
       ...(filters?.status && filters.status !== "all"
         ? { status: filters.status }
         : {}),
+      ...(filters?.patient ? { patient: filters.patient } : {}),
       page,
       page_size,
     },

@@ -150,9 +150,13 @@ export type FetchTelemetryReportParams = {
   sessionB?: number;
 };
 
-async function fetchSessions(token: string): Promise<TelemetrySession[]> {
+async function fetchSessions(
+  token: string,
+  patientId?: number,
+): Promise<TelemetrySession[]> {
   const { data } = await axios.get(`${API_BASE}/telemetry/sessions/`, {
     headers: { Authorization: `Bearer ${token}` },
+    params: patientId ? { patient_id: patientId } : undefined,
   });
   return data;
 }
@@ -299,12 +303,12 @@ async function fetchTelemetryReport(
   return data;
 }
 
-export function useTelemetrySessions() {
+export function useTelemetrySessions(patientId?: number | null) {
   const { accessToken } = useAuth();
 
   return useQuery({
-    queryKey: ["telemetry", "sessions"],
-    queryFn: () => fetchSessions(accessToken!),
+    queryKey: ["telemetry", "sessions", patientId ?? null],
+    queryFn: () => fetchSessions(accessToken!, patientId ?? undefined),
     enabled: !!accessToken,
   });
 }
