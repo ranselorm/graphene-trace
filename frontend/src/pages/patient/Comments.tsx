@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useComments, useCreateComment } from "@/hooks/useComments";
+import { useComments, useCreateComment, CommentResponse } from "@/hooks/useComments";
 import {
   useTelemetrySessionFrames,
   useTelemetrySessions,
@@ -15,6 +15,8 @@ export default function PatientCommentsPage() {
   );
   const [selectedFrameNumber, setSelectedFrameNumber] = useState(0);
   const [commentBody, setCommentBody] = useState("");
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyBody, setReplyBody] = useState("");
 
   useEffect(() => {
     if (!selectedSessionId && sessions.length > 0) {
@@ -40,19 +42,76 @@ export default function PatientCommentsPage() {
   );
   const createCommentMutation = useCreateComment();
 
-  const selectedSessionLabel = useMemo(() => {
-    if (!selectedSession) return "";
-    return `Session ${selectedSession.session_date.slice(0, 10)} (#${
-      selectedSession.id
-    })`;
-  }, [selectedSession]);
+  const renderComment = (comment: CommentResponse, depth = 0) => (
+    <div key={comment.id} style={{ marginLeft: depth * 20 }}>
+      <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-700">
+          <div>
+            <span className="font-medium text-zinc-900">
+              {comment.user_name}
+            </span>
+            <span className="ml-2 text-xs uppercase tracking-[0.2em] text-zinc-500">
+              {comment.user_role}
+            </span>
+          </div>
+          <div className="text-xs text-zinc-500">
+            {new Date(comment.created_at).toLocaleString()}
+          </div>
+        </div>
+        <p className="mt-3 whitespace-pre-line text-sm text-zinc-800">
+          {comment.body}
+        </p>
+        <div className="mt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+          >
+            Reply
+          </Button>
+        </div>
+        {replyingTo === comment.id && (
+          <div className="mt-3 space-y-2">
+            <textarea
+              value={replyBody}
+              onChange={(event) => setReplyBody(event.target.value)}
+              rows={3}
+              placeholder="Write a reply..."
+              className="w-full resize-none rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none"
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => handleSubmit(comment.id)}
+                disabled={!replyBody.trim() || createCommentMutation.isPending}
+              >
+                {createCommentMutation.isPending ? "Posting..." : "Post reply"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setReplyingTo(null);
+                  setReplyBody("");
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+      {comment.replies.map((reply) => renderComment(reply, depth + 1))}
+    </div>
+  );
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (parent?: number) => {
+    const body = parent ? replyBody.trim() : commentBody.trim();
     if (!selectedSensorFrameId) {
       toast.error("Pick a session and frame before leaving a comment.");
       return;
     }
-    if (!commentBody.trim()) {
+    if (!body) {
       toast.error("Please add a comment before submitting.");
       return;
     }
@@ -60,11 +119,17 @@ export default function PatientCommentsPage() {
     createCommentMutation.mutate(
       {
         sensor_frame: selectedSensorFrameId,
-        body: commentBody.trim(),
+        body,
+        ...(parent && { parent }),
       },
       {
         onSuccess: () => {
-          setCommentBody("");
+          if (parent) {
+            setReplyBody("");
+            setReplyingTo(null);
+          } else {
+            setCommentBody("");
+          }
           toast.success("Comment posted.");
         },
         onError: () => {
@@ -200,29 +265,7 @@ export default function PatientCommentsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="rounded-3xl border border-zinc-200 bg-zinc-50 p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-700">
-                    <div>
-                      <span className="font-medium text-zinc-900">
-                        {comment.user_name}
-                      </span>
-                      <span className="ml-2 text-xs uppercase tracking-[0.2em] text-zinc-500">
-                        {comment.user_role}
-                      </span>
-                    </div>
-                    <div className="text-xs text-zinc-500">
-                      {new Date(comment.created_at).toLocaleString()}
-                    </div>
-                  </div>
-                  <p className="mt-3 whitespace-pre-line text-sm text-zinc-800">
-                    {comment.body}
-                  </p>
-                </div>
-              ))}
+              {comments.filter(c => c.parent === null).map((comment) => renderComment(comment))}
             </div>
           )}
         </CardContent>

@@ -7,6 +7,7 @@ from django.db import models
 class Comment(models.Model):
     sensor_frame = models.ForeignKey("telemetry.SensorFrame", on_delete=models.CASCADE, related_name="comments")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments")
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
 
     body = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)

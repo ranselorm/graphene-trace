@@ -7,6 +7,7 @@ const API_BASE = import.meta.env.VITE_BASE_URL;
 type CommentPayload = {
   sensor_frame: number;
   body: string;
+  parent?: number;
 };
 
 export type CommentResponse = {
@@ -16,7 +17,9 @@ export type CommentResponse = {
   user_name: string;
   user_email: string;
   user_role: string;
+  parent: number | null;
   body: string;
+  replies: CommentResponse[];
   created_at: string;
 };
 

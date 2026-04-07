@@ -16,7 +16,8 @@ class CommentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = (
             Comment.objects.all()
-            .select_related("user", "sensor_frame", "sensor_frame__patient", "sensor_frame__patient__patient")
+            .select_related("user", "sensor_frame", "sensor_frame__patient", "sensor_frame__patient__patient", "parent")
+            .prefetch_related("replies")
             .order_by("-created_at")
         )
 
