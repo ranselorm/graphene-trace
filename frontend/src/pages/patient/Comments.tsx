@@ -1,49 +1,37 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useComments, useCreateComment, CommentResponse } from "@/hooks/useComments";
+import { useComments, useCreateComment } from "@/hooks/useComments";
+import type { CommentResponse } from "@/hooks/useComments";
 import {
   useTelemetrySessionFrames,
   useTelemetrySessions,
 } from "@/hooks/useTelemetry";
 import { toast } from "sonner";
 
-export default function PatientCommentsPage() {
-  const { data: sessions = [] } = useTelemetrySessions();
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
-    null,
-  );
-  const [selectedFrameNumber, setSelectedFrameNumber] = useState(0);
-  const [commentBody, setCommentBody] = useState("");
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
-  const [replyBody, setReplyBody] = useState("");
+interface CommentItemProps {
+  comment: CommentResponse;
+  depth: number;
+  replyingTo: number | null;
+  setReplyingTo: (id: number | null) => void;
+  replyBody: string;
+  setReplyBody: (body: string) => void;
+  onReply: (parentId: number) => void;
+  isPending: boolean;
+}
 
-  useEffect(() => {
-    if (!selectedSessionId && sessions.length > 0) {
-      setSelectedSessionId(sessions[0].id);
-    }
-  }, [sessions, selectedSessionId]);
-
-  useEffect(() => {
-    setSelectedFrameNumber(0);
-  }, [selectedSessionId]);
-
-  const selectedSession =
-    sessions.find((session) => session.id === selectedSessionId) ?? null;
-
-  const { data: frameData, isLoading: loadingFrame } =
-    useTelemetrySessionFrames(selectedSessionId, selectedFrameNumber, selectedFrameNumber);
-
-  const selectedFrame = frameData?.frames?.[0] ?? null;
-  const selectedSensorFrameId = selectedFrame?.id ?? null;
-
-  const { data: comments = [], isLoading: loadingComments } = useComments(
-    selectedSensorFrameId,
-  );
-  const createCommentMutation = useCreateComment();
-
-  const renderComment = (comment: CommentResponse, depth = 0) => (
-    <div key={comment.id} style={{ marginLeft: depth * 20 }}>
+function CommentItem({
+  comment,
+  depth,
+  replyingTo,
+  setReplyingTo,
+  replyBody,
+  setReplyBody,
+  onReply,
+  isPending,
+}: CommentItemProps) {
+  return (
+    <div style={{ marginLeft: depth * 20 }}>
       <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-700">
           <div>
@@ -82,10 +70,10 @@ export default function PatientCommentsPage() {
             <div className="flex gap-2">
               <Button
                 size="sm"
-                onClick={() => handleSubmit(comment.id)}
-                disabled={!replyBody.trim() || createCommentMutation.isPending}
+                onClick={() => onReply(comment.id)}
+                disabled={!replyBody.trim() || isPending}
               >
-                {createCommentMutation.isPending ? "Posting..." : "Post reply"}
+                {isPending ? "Posting..." : "Post reply"}
               </Button>
               <Button
                 variant="outline"
@@ -101,9 +89,62 @@ export default function PatientCommentsPage() {
           </div>
         )}
       </div>
-      {comment.replies.map((reply) => renderComment(reply, depth + 1))}
+      {comment.replies.map((reply) => (
+        <CommentItem
+          key={reply.id}
+          comment={reply}
+          depth={depth + 1}
+          replyingTo={replyingTo}
+          setReplyingTo={setReplyingTo}
+          replyBody={replyBody}
+          setReplyBody={setReplyBody}
+          onReply={onReply}
+          isPending={isPending}
+        />
+      ))}
     </div>
   );
+}
+
+export default function PatientCommentsPage() {
+  const { data: sessions = [] } = useTelemetrySessions();
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
+    null,
+  );
+  const [selectedFrameNumber, setSelectedFrameNumber] = useState(0);
+  const [commentBody, setCommentBody] = useState("");
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyBody, setReplyBody] = useState("");
+
+  useEffect(() => {
+    if (!selectedSessionId && sessions.length > 0) {
+      setSelectedSessionId(sessions[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessions]);
+
+  useEffect(() => {
+    setSelectedFrameNumber(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSessionId]);
+
+  const selectedSession =
+    sessions.find((session) => session.id === selectedSessionId) ?? null;
+
+  const { data: frameData, isLoading: loadingFrame } =
+    useTelemetrySessionFrames(selectedSessionId, selectedFrameNumber, selectedFrameNumber);
+
+  const selectedFrame = frameData?.frames?.[0] ?? null;
+  const selectedSensorFrameId = selectedFrame?.id ?? null;
+
+  const { data: comments = [], isLoading: loadingComments } = useComments(
+    selectedSensorFrameId,
+  );
+  const createCommentMutation = useCreateComment();
+
+  const selectedSessionLabel = selectedSession
+    ? `Session ${selectedSession.session_date.slice(0, 10)} (#${selectedSession.id})`
+    : "";
 
   const handleSubmit = async (parent?: number) => {
     const body = parent ? replyBody.trim() : commentBody.trim();
@@ -138,6 +179,8 @@ export default function PatientCommentsPage() {
       },
     );
   };
+
+  const handleReply = (parentId: number) => handleSubmit(parentId);
 
   return (
     <div className="container mx-auto space-y-6">
@@ -234,7 +277,7 @@ export default function PatientCommentsPage() {
                   : "Pick a session and frame first."}
               </div>
               <Button
-                onClick={handleSubmit}
+                onClick={() => handleSubmit()}
                 disabled={
                   !selectedSensorFrameId ||
                   !commentBody.trim() ||
@@ -265,7 +308,19 @@ export default function PatientCommentsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {comments.filter(c => c.parent === null).map((comment) => renderComment(comment))}
+              {comments.filter(c => c.parent === null).map((comment) => (
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  depth={0}
+                  replyingTo={replyingTo}
+                  setReplyingTo={setReplyingTo}
+                  replyBody={replyBody}
+                  setReplyBody={setReplyBody}
+                  onReply={handleReply}
+                  isPending={createCommentMutation.isPending}
+                />
+              ))}
             </div>
           )}
         </CardContent>

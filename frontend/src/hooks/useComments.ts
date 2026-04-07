@@ -10,7 +10,7 @@ type CommentPayload = {
   parent?: number;
 };
 
-export type CommentResponse = {
+export interface CommentResponse {
   id: number;
   sensor_frame: number;
   user: number;
@@ -21,7 +21,7 @@ export type CommentResponse = {
   body: string;
   replies: CommentResponse[];
   created_at: string;
-};
+}
 
 async function fetchComments(
   token: string,
