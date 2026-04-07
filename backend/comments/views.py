@@ -47,7 +47,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
         if is_patient(user):
             profile = get_user_patient_profile(user)
-            if not profile or sensor_frame.patient_id != profile.id:
+            if not profile or sensor_frame.patient_id != profile.pk:
                 raise PermissionDenied("You do not have access to this sensor frame.")
             return
 
