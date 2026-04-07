@@ -9,6 +9,7 @@ import Settings from "./pages/admin/Settings";
 import ClinicianOverview from "./pages/clinician/Overview";
 import ClinicianPatients from "./pages/clinician/Patients";
 import ClinicianAlerts from "./pages/clinician/Alerts";
+import ClinicianComments from "./pages/clinician/Comments";
 import PatientDashboard from "./pages/patient/Dashboard";
 import PatientReports from "./pages/patient/Reports";
 import PatientComments from "./pages/patient/Comments";
@@ -71,6 +72,11 @@ export const clinicianRoutesConfig: RouteConfig[] = [
     path: "alerts",
     title: "Alerts",
     element: React.createElement(ClinicianAlerts),
+  },
+  {
+    path: "comments",
+    title: "Comments",
+    element: React.createElement(ClinicianComments),
   },
 ];
 

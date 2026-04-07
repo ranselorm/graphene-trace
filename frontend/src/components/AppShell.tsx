@@ -31,6 +31,7 @@ const navByRole: Record<Role, NavItem[]> = {
     { label: "Overview", to: "/clinician", end: true },
     { label: "Patients", to: "/clinician/patients" },
     { label: "Alerts", to: "/clinician/alerts" },
+    { label: "Comments", to: "/clinician/comments" },
   ],
   patient: [
     { label: "Dashboard", to: "/patient/dashboard", end: true },
