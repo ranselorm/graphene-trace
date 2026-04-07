@@ -47,6 +47,7 @@ export type SessionFramesResponse = {
   end: number;
   total_session_frames: number;
   frames: Array<{
+    id?: number;
     frame_number: number;
     timestamp: string;
     data: number[][];

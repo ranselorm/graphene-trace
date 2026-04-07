@@ -11,6 +11,7 @@ import ClinicianPatients from "./pages/clinician/Patients";
 import ClinicianAlerts from "./pages/clinician/Alerts";
 import PatientDashboard from "./pages/patient/Dashboard";
 import PatientReports from "./pages/patient/Reports";
+import PatientComments from "./pages/patient/Comments";
 
 type RouteConfig = {
   path: string;
@@ -78,6 +79,11 @@ export const patientRoutesConfig: RouteConfig[] = [
     path: "dashboard",
     title: "Dashboard",
     element: React.createElement(PatientDashboard),
+  },
+  {
+    path: "comments",
+    title: "Comments",
+    element: React.createElement(PatientComments),
   },
   {
     path: "reports",

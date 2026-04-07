@@ -577,6 +577,7 @@ def session_frames(request, session_id):
         'total_session_frames': session.total_frames,
         'frames': [
             {
+                'id': f.id,
                 'frame_number': f.frame_number,
                 'timestamp': f.timestamp,
                 'data': f.data,
