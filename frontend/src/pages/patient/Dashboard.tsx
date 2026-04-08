@@ -430,6 +430,36 @@ export default function PatientDashboardPage() {
 
   const averages = metricsData?.averages;
 
+  const kpiCards = [
+    {
+      label: "Avg Peak Pressure",
+      value: averages?.peak_pressure?.toFixed(1) ?? "--",
+      suffix: "",
+      icon: "mdi:gauge",
+      accent: "border-blue-100 bg-blue-50 text-blue-700",
+      valueClass: "text-blue-700",
+      helper: "Peak pressure index",
+    },
+    {
+      label: "Avg Contact Area",
+      value: averages?.contact_area?.toFixed(1) ?? "--",
+      suffix: "%",
+      icon: "mdi:grid",
+      accent: "border-cyan-100 bg-cyan-50 text-cyan-700",
+      valueClass: "text-cyan-700",
+      helper: "Pixels above contact baseline",
+    },
+    {
+      label: "Avg Risk Score",
+      value: averages?.risk_score?.toFixed(2) ?? "--",
+      suffix: "",
+      icon: "mdi:chart-line",
+      accent: "border-violet-100 bg-violet-50 text-violet-700",
+      valueClass: "text-violet-700",
+      helper: "Computed from pressure and contact thresholds",
+    },
+  ] as const;
+
   const handleUpload = () => {
     if (!selectedFile) {
       toast.error("Select a CSV file first.");
@@ -570,67 +600,32 @@ export default function PatientDashboardPage() {
 
       <ThresholdSettingsCard />
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-blue-100 bg-white animate-in fade-in slide-in-from-bottom-1 duration-500 shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-zinc-600">
-              Avg Peak Pressure
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end justify-between">
-              <p className="text-3xl font-bold text-zinc-900">
-                {averages?.peak_pressure?.toFixed(1) ?? "--"}
-              </p>
-              <span className="text-xs text-emerald-700 bg-emerald-100 rounded-full px-2 py-1">
-                from selected session
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-zinc-600">Peak pressure index</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-cyan-100 bg-white animate-in fade-in slide-in-from-bottom-2 duration-500 shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-zinc-600">
-              Avg Contact Area
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end justify-between">
-              <p className="text-3xl font-bold text-zinc-900">
-                {averages?.contact_area?.toFixed(1) ?? "--"}%
-              </p>
-              <span className="text-xs text-blue-700 bg-blue-100 rounded-full px-2 py-1">
-                patient-specific metric
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-zinc-600">
-              Pixels above contact baseline
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-violet-100 bg-white animate-in fade-in slide-in-from-bottom-3 duration-500 sm:col-span-2 lg:col-span-1 shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-zinc-600">
-              Avg Risk Score
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end justify-between">
-              <p className="text-3xl font-bold text-zinc-900">
-                {averages?.risk_score?.toFixed(2) ?? "--"}
-              </p>
-              <span className="text-xs text-violet-700 bg-violet-100 rounded-full px-2 py-1">
-                scale 0 to 10
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-zinc-600">
-              Computed from pressure and contact thresholds
-            </p>
-          </CardContent>
-        </Card>
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {kpiCards.map((card) => (
+          <Card
+            key={card.label}
+            className={`h-full border shadow-none ${card.accent}`}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-600">
+                {card.label}
+              </CardTitle>
+              <div className="rounded-full bg-white/80 p-2 shadow-sm ring-1 ring-black/5">
+                <Icon
+                  icon={card.icon}
+                  className={`text-lg ${card.valueClass}`}
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-3xl font-semibold ${card.valueClass}`}>
+                {card.value}
+                {card.suffix}
+              </div>
+              <p className="mt-2 text-sm text-zinc-600">{card.helper}</p>
+            </CardContent>
+          </Card>
+        ))}
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">

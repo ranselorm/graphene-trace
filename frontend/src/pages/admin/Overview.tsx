@@ -1,8 +1,9 @@
-import MetricsCard from "@/components/admin/MetricsCard";
+import { Icon } from "@iconify/react";
 import { AlertsTrendChart } from "@/components/admin/AlertsTrendChart";
 import { AssignmentCoverageChart } from "@/components/admin/AssignmentCoverageChart";
 import { AlertSeverityChart } from "@/components/admin/AlertSeverityChart";
 import { ClinicianWorkloadChart } from "@/components/admin/ClinicianWorkloadChart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { LatestAlertsTable } from "@/components/admin/LatestAlerts";
 import { AlertDetailsSheet } from "@/components/admin/AlertDetails";
@@ -81,6 +82,37 @@ function Overview() {
         right.patients - left.patients,
     );
 
+  const kpiCards = [
+    {
+      label: "Total Users",
+      value: overviewData?.users?.total ?? 0,
+      icon: "clarity:users-line",
+      accent: "border-blue-100 bg-blue-50 text-blue-700",
+      valueClass: "text-blue-700",
+    },
+    {
+      label: "Patients",
+      value: overviewData?.users?.patients ?? 0,
+      icon: "material-symbols-light:recent-patient-outline-rounded",
+      accent: "border-emerald-100 bg-emerald-50 text-emerald-700",
+      valueClass: "text-emerald-700",
+    },
+    {
+      label: "Clinician",
+      value: overviewData?.users?.clinicians ?? 0,
+      icon: "healthicons:doctor",
+      accent: "border-violet-100 bg-violet-50 text-violet-700",
+      valueClass: "text-violet-700",
+    },
+    {
+      label: "Alerts",
+      value: overviewData?.alerts?.by_severity?.total ?? 0,
+      icon: "fluent:alert-24-regular",
+      accent: "border-rose-100 bg-rose-50 text-rose-700",
+      valueClass: "text-rose-700",
+    },
+  ] as const;
+
   if (isResolving) {
     console.log("resolving");
   }
@@ -88,35 +120,30 @@ function Overview() {
   return (
     <div>
       <div className="space-y-6 container mx-auto">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricsCard
-            label="Total Users"
-            value={overviewData?.users?.total}
-            change={2}
-            icon="clarity:users-line"
-            tone="blue"
-          />
-          <MetricsCard
-            label="Patients"
-            value={overviewData?.users?.patients}
-            change={3}
-            icon="material-symbols-light:recent-patient-outline-rounded"
-            tone="emerald"
-          />
-          <MetricsCard
-            label="Clinician"
-            value={overviewData?.users?.clinicians}
-            change={-2}
-            icon="healthicons:doctor"
-            tone="violet"
-          />
-          <MetricsCard
-            label="Alerts"
-            value={overviewData?.alerts?.by_severity?.total}
-            change={12}
-            icon="fluent:alert-24-regular"
-            tone="rose"
-          />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {kpiCards.map((card) => (
+            <Card
+              key={card.label}
+              className={`h-full border shadow-none ${card.accent}`}
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-600">
+                  {card.label}
+                </CardTitle>
+                <div className="rounded-full bg-white/80 p-2 shadow-sm ring-1 ring-black/5">
+                  <Icon
+                    icon={card.icon}
+                    className={`text-lg ${card.valueClass}`}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className={`text-3xl font-semibold ${card.valueClass}`}>
+                  {card.value}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Charts */}
