@@ -107,6 +107,44 @@ type ComparisonDelta = {
   direction: "up" | "down" | "same";
 };
 
+type SessionFrameSummary = {
+  frame_number: number;
+  risk_score: number;
+  peak_pressure: number;
+};
+
+export type SessionReportResponse = {
+  session_id: number;
+  filename: string;
+  session_date: string;
+  duration_seconds: number;
+  total_frames: number;
+  avg_peak_pressure: number;
+  avg_contact_area: number;
+  avg_pressure: number;
+  avg_risk_score: number;
+  highest_risk_frame: SessionFrameSummary | null;
+  lowest_risk_frame: SessionFrameSummary | null;
+  pressure_over_time: Array<{
+    frame_number: number;
+    timestamp: string;
+    peak_pressure_index: number;
+    average_pressure: number;
+    risk_score: number;
+  }>;
+};
+
+export type SessionCompareResponse = {
+  "session a data": ReportSessionSummary;
+  "session b data": ReportSessionSummary;
+  comparison: {
+    risk_score: ComparisonDelta;
+    peak_pressure: ComparisonDelta;
+    avg_pressure: ComparisonDelta;
+    avg_contact_area: ComparisonDelta;
+  };
+};
+
 type ReportSessionSummary = {
   id: number;
   filename: string;
@@ -304,6 +342,57 @@ async function fetchTelemetryReport(
   return data;
 }
 
+async function fetchSessionReport(
+  token: string,
+  sessionId: number,
+): Promise<SessionReportResponse> {
+  const { data } = await axios.get(
+    `${API_BASE}/telemetry/report/${sessionId}/`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  return data;
+}
+
+async function fetchSessionComparison(
+  token: string,
+  sessionA: number,
+  sessionB: number,
+): Promise<SessionCompareResponse> {
+  const { data } = await axios.get(`${API_BASE}/telemetry/report/compare/`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { session_a: sessionA, session_b: sessionB },
+  });
+
+  return {
+    "session a data": data["session a data"],
+    "session b data": data["session b data"],
+    comparison: {
+      risk_score: {
+        diff: data.comparison.risk_score.diff,
+        percent_change: data.comparison.risk_score.pct ?? null,
+        direction: data.comparison.risk_score.direction,
+      },
+      peak_pressure: {
+        diff: data.comparison.peak_pressure.diff,
+        percent_change: data.comparison.peak_pressure.pct ?? null,
+        direction: data.comparison.peak_pressure.direction,
+      },
+      avg_pressure: {
+        diff: data.comparison.avg_pressure.diff,
+        percent_change: data.comparison.avg_pressure.pct ?? null,
+        direction: data.comparison.avg_pressure.direction,
+      },
+      avg_contact_area: {
+        diff: data.comparison.avg_contact_area.diff,
+        percent_change: data.comparison.avg_contact_area.pct ?? null,
+        direction: data.comparison.avg_contact_area.direction,
+      },
+    },
+  };
+}
+
 export function useTelemetrySessions(patientId?: number | null) {
   const { accessToken } = useAuth();
 
@@ -417,5 +506,28 @@ export function useTelemetryReport(
     queryKey: ["telemetry", "report", params],
     queryFn: () => fetchTelemetryReport(accessToken!, params),
     enabled: !!accessToken && (options?.enabled ?? true),
+  });
+}
+
+export function useTelemetrySessionReport(sessionId: number | null) {
+  const { accessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["telemetry", "report", sessionId],
+    queryFn: () => fetchSessionReport(accessToken!, sessionId!),
+    enabled: !!accessToken && !!sessionId,
+  });
+}
+
+export function useTelemetrySessionComparison(
+  sessionA: number | null,
+  sessionB: number | null,
+) {
+  const { accessToken } = useAuth();
+
+  return useQuery({
+    queryKey: ["telemetry", "report", "compare", sessionA, sessionB],
+    queryFn: () => fetchSessionComparison(accessToken!, sessionA!, sessionB!),
+    enabled: !!accessToken && !!sessionA && !!sessionB,
   });
 }
