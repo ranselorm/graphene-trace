@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Icon } from "@iconify/react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -113,45 +114,67 @@ export default function Alerts() {
     });
   };
 
+  const kpiCards = [
+    {
+      label: "Total Alerts",
+      value: counts.total,
+      tone: "blue",
+      icon: "mdi:alert-circle-outline",
+      accent: "border-blue-100 bg-blue-50 text-blue-700",
+      valueClass: "text-zinc-900",
+    },
+    {
+      label: "High Severity",
+      value: counts.high,
+      tone: "rose",
+      icon: "mdi:alert-octagon-outline",
+      accent: "border-rose-100 bg-rose-50 text-rose-700",
+      valueClass: "text-rose-700",
+    },
+    {
+      label: "New",
+      value: counts.new,
+      tone: "sky",
+      icon: "mdi:bell-outline",
+      accent: "border-sky-100 bg-sky-50 text-sky-700",
+      valueClass: "text-sky-700",
+    },
+    {
+      label: "Resolved",
+      value: counts.resolved,
+      tone: "emerald",
+      icon: "mdi:check-circle-outline",
+      accent: "border-emerald-100 bg-emerald-50 text-emerald-700",
+      valueClass: "text-emerald-700",
+    },
+  ] as const;
+
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-zinc-200 shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-zinc-500">
-              Total Alerts
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold text-zinc-900">
-            {counts.total}
-          </CardContent>
-        </Card>
-        <Card className="border-zinc-200 shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-zinc-500">
-              High Severity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold text-rose-700">
-            {counts.high}
-          </CardContent>
-        </Card>
-        <Card className="border-zinc-200 shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-zinc-500">New</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold text-blue-700">
-            {counts.new}
-          </CardContent>
-        </Card>
-        <Card className="border-zinc-200 shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-zinc-500">Resolved</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold text-emerald-700">
-            {counts.resolved}
-          </CardContent>
-        </Card>
+        {kpiCards.map((card) => (
+          <Card
+            key={card.label}
+            className={`border shadow-none ${card.accent}`}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-600">
+                {card.label}
+              </CardTitle>
+              <div className="rounded-full bg-white/80 p-2 shadow-sm ring-1 ring-black/5">
+                <Icon
+                  icon={card.icon}
+                  className={`text-lg ${card.valueClass}`}
+                />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-3xl font-semibold ${card.valueClass}`}>
+                {card.value}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Card className="border-zinc-200 shadow-none">

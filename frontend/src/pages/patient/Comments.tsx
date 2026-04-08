@@ -32,7 +32,7 @@ function CommentItem({
 }: CommentItemProps) {
   return (
     <div style={{ marginLeft: depth * 20 }}>
-      <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-4">
+      <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-4 my-2">
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-700">
           <div>
             <span className="font-medium text-zinc-900">
@@ -53,7 +53,9 @@ function CommentItem({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+            onClick={() =>
+              setReplyingTo(replyingTo === comment.id ? null : comment.id)
+            }
           >
             Reply
           </Button>
@@ -132,7 +134,11 @@ export default function PatientCommentsPage() {
     sessions.find((session) => session.id === selectedSessionId) ?? null;
 
   const { data: frameData, isLoading: loadingFrame } =
-    useTelemetrySessionFrames(selectedSessionId, selectedFrameNumber, selectedFrameNumber);
+    useTelemetrySessionFrames(
+      selectedSessionId,
+      selectedFrameNumber,
+      selectedFrameNumber,
+    );
 
   const selectedFrame = frameData?.frames?.[0] ?? null;
   const selectedSensorFrameId = selectedFrame?.id ?? null;
@@ -194,7 +200,8 @@ export default function PatientCommentsPage() {
               Review sensor frame notes
             </h1>
             <p className="mt-2 text-sm text-zinc-600 max-w-2xl">
-              Select a session and frame to view existing commentary and add your own patient notes.
+              Select a session and frame to view existing commentary and add
+              your own patient notes.
             </p>
           </div>
         </div>
@@ -229,7 +236,11 @@ export default function PatientCommentsPage() {
                 <input
                   type="range"
                   min={0}
-                  max={selectedSession?.total_frames ? selectedSession.total_frames - 1 : 0}
+                  max={
+                    selectedSession?.total_frames
+                      ? selectedSession.total_frames - 1
+                      : 0
+                  }
                   value={selectedFrameNumber}
                   onChange={(event) =>
                     setSelectedFrameNumber(Number(event.target.value))
@@ -252,7 +263,8 @@ export default function PatientCommentsPage() {
                   : "Choose a session to load comments."}
               </p>
               <p className="mt-2 text-xs text-zinc-500">
-                This app stores comments for individual sensor frames so your clinician can see exactly where the note belongs.
+                This app stores comments for individual sensor frames so your
+                clinician can see exactly where the note belongs.
               </p>
             </div>
           </CardContent>
@@ -284,7 +296,9 @@ export default function PatientCommentsPage() {
                   createCommentMutation.isPending
                 }
               >
-                {createCommentMutation.isPending ? "Posting..." : "Post comment"}
+                {createCommentMutation.isPending
+                  ? "Posting..."
+                  : "Post comment"}
               </Button>
             </div>
           </CardContent>
@@ -308,19 +322,21 @@ export default function PatientCommentsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {comments.filter(c => c.parent === null).map((comment) => (
-                <CommentItem
-                  key={comment.id}
-                  comment={comment}
-                  depth={0}
-                  replyingTo={replyingTo}
-                  setReplyingTo={setReplyingTo}
-                  replyBody={replyBody}
-                  setReplyBody={setReplyBody}
-                  onReply={handleReply}
-                  isPending={createCommentMutation.isPending}
-                />
-              ))}
+              {comments
+                .filter((c) => c.parent === null)
+                .map((comment) => (
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    depth={0}
+                    replyingTo={replyingTo}
+                    setReplyingTo={setReplyingTo}
+                    replyBody={replyBody}
+                    setReplyBody={setReplyBody}
+                    onReply={handleReply}
+                    isPending={createCommentMutation.isPending}
+                  />
+                ))}
             </div>
           )}
         </CardContent>
