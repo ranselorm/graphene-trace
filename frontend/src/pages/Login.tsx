@@ -77,10 +77,10 @@ export function LoginPage() {
   const passwordValidation = useMemo(() => {
     return {
       minLength: password.length >= 8,
-      hasUppercase: /[A-Z]/.test(password),
+      // hasUppercase: /[A-Z]/.test(password),
       hasLowercase: /[a-z]/.test(password),
       hasNumber: /[0-9]/.test(password),
-      hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+      // hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
     };
   }, [password]);
 
@@ -259,10 +259,10 @@ export function LoginPage() {
                           met={passwordValidation.minLength}
                           text="At least 8 characters"
                         />
-                        <PasswordRequirement
+                        {/* <PasswordRequirement
                           met={passwordValidation.hasUppercase}
                           text="One uppercase letter"
-                        />
+                        /> */}
                         <PasswordRequirement
                           met={passwordValidation.hasLowercase}
                           text="One lowercase letter"
@@ -271,10 +271,10 @@ export function LoginPage() {
                           met={passwordValidation.hasNumber}
                           text="One number"
                         />
-                        <PasswordRequirement
+                        {/* <PasswordRequirement
                           met={passwordValidation.hasSymbol}
                           text="One special character"
-                        />
+                        /> */}
                       </div>
                     </div>
 
