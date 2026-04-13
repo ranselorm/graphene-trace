@@ -7,7 +7,6 @@ import { Icon } from "@iconify/react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,

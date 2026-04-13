@@ -50,7 +50,6 @@ const toneClasses: Record<
 const MetricsCard = ({
   label,
   value,
-  change,
   icon,
   tone = "slate",
 }: MetricsCardProps) => {
