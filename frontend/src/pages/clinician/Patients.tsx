@@ -117,7 +117,7 @@ const Patients = () => {
         <CardHeader>
           <CardTitle className="text-lg text-zinc-900">My Patients</CardTitle>
           <p className="text-sm text-zinc-600">
-            View patients currently assigned to your clinician account.
+            View patients currently assigned to your account.
           </p>
         </CardHeader>
         <CardContent>

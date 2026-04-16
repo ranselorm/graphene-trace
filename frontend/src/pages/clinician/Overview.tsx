@@ -44,7 +44,7 @@ export default function ClinicianOverviewPage() {
 
   const kpiCards = [
     {
-      label: "My Active Patients",
+      label: "Assigned Patients",
       value: assignedPatients,
       icon: "material-symbols-light:recent-patient-outline-rounded",
       accent: "border-blue-100 bg-blue-50 text-blue-700",

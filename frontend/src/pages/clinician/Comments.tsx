@@ -45,45 +45,48 @@ function CommentItem({
   onReply,
   isPending,
 }: CommentItemProps) {
+  const indent = Math.min(depth * 14, 56);
+
   return (
-    <div style={{ marginLeft: depth * 20 }}>
-      <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-4">
+    <div className="my-1.5" style={{ marginLeft: indent }}>
+      <div className="w-full rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur-sm md:p-3">
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-700">
           <div>
-            <span className="font-medium text-zinc-900">
+            <span className="font-semibold text-zinc-900">
               {comment.user_name}
             </span>
-            <span className="ml-2 text-xs uppercase tracking-[0.2em] text-zinc-500">
+            <span className="ml-2 text-[10px] uppercase tracking-[0.12em] text-zinc-500">
               {comment.user_role}
             </span>
           </div>
-          <div className="text-xs text-zinc-500">
+          <div className="text-[11px] text-zinc-500">
             {new Date(comment.created_at).toLocaleString()}
           </div>
         </div>
-        <p className="mt-3 whitespace-pre-line text-sm text-zinc-800">
+        <p className="mt-1.5 whitespace-pre-line text-[13px] leading-5 text-zinc-800">
           {comment.body}
         </p>
-        <div className="mt-3">
+        <div className="mt-1.5">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() =>
               setReplyingTo(replyingTo === comment.id ? null : comment.id)
             }
+            className="h-6 rounded-full px-2 text-[11px] text-zinc-600 hover:bg-zinc-200/60"
           >
             Reply
           </Button>
         </div>
 
         {replyingTo === comment.id && (
-          <div className="mt-3 space-y-2">
+          <div className="mt-2 space-y-2">
             <textarea
               value={replyBody}
               onChange={(event) => setReplyBody(event.target.value)}
-              rows={3}
+              rows={2}
               placeholder="Write a reply..."
-              className="w-full resize-none rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none"
+              className="w-full resize-none rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none"
             />
             <div className="flex gap-2">
               <Button
@@ -242,8 +245,8 @@ export default function ClinicianCommentsPage() {
   };
 
   return (
-    <div className="container mx-auto space-y-6">
-      <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+    <div className="container mx-auto space-y-4">
+      <section className="rounded-3xl border border-zinc-200 bg-white p-3.5 shadow-sm md:p-4">
         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
           Comments
         </p>
@@ -256,12 +259,12 @@ export default function ClinicianCommentsPage() {
         </p>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[1.25fr_0.9fr]">
+      <div className="grid gap-3 xl:grid-cols-[1.25fr_0.9fr]">
         <Card className="border-zinc-200 bg-white">
-          <CardHeader>
+          <CardHeader className="px-4 py-3">
             <CardTitle>Frame selection</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 px-4 pb-4 pt-0">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-2 text-sm text-zinc-700">
                 Patient
@@ -324,7 +327,7 @@ export default function ClinicianCommentsPage() {
               </div>
             </label>
 
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
               <p>
                 {selectedPatient && selectedSession
                   ? `${selectedPatient.full_name} • ${selectedSessionLabel} • Frame ${selectedFrameNumber + 1}`
@@ -335,16 +338,16 @@ export default function ClinicianCommentsPage() {
         </Card>
 
         <Card className="border-zinc-200 bg-white">
-          <CardHeader>
+          <CardHeader className="px-4 py-3">
             <CardTitle>Add clinician comment</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 px-4 pb-4 pt-0">
             <textarea
               value={commentBody}
               onChange={(event) => setCommentBody(event.target.value)}
-              rows={6}
+              rows={3}
               placeholder="Write a note for this frame..."
-              className="w-full resize-none rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none"
+              className="w-full resize-none rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none"
             />
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs text-zinc-500">
@@ -370,10 +373,10 @@ export default function ClinicianCommentsPage() {
       </div>
 
       <Card className="border-zinc-200 bg-white">
-        <CardHeader>
+        <CardHeader className="px-4 py-3">
           <CardTitle>Frame comments</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-2.5 px-4 pb-4 pt-0 lg:px-6">
           {loadingFrame || loadingComments ? (
             <div className="text-sm text-zinc-600">Loading comments...</div>
           ) : !selectedSensorFrameId ? (
@@ -385,7 +388,7 @@ export default function ClinicianCommentsPage() {
               No comments yet for this frame. Leave the first note above.
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {topLevelComments.map((comment) => (
                 <CommentItem
                   key={comment.id}
