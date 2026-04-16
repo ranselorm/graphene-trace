@@ -91,25 +91,25 @@ function Overview() {
       valueClass: "text-blue-700",
     },
     {
-      label: "Patients",
-      value: overviewData?.users?.patients ?? 0,
-      icon: "material-symbols-light:recent-patient-outline-rounded",
-      accent: "border-emerald-100 bg-emerald-50 text-emerald-700",
-      valueClass: "text-emerald-700",
-    },
-    {
-      label: "Clinician",
-      value: overviewData?.users?.clinicians ?? 0,
-      icon: "healthicons:doctor",
-      accent: "border-violet-100 bg-violet-50 text-violet-700",
-      valueClass: "text-violet-700",
-    },
-    {
       label: "Alerts",
       value: overviewData?.alerts?.by_severity?.total ?? 0,
       icon: "fluent:alert-24-regular",
       accent: "border-rose-100 bg-rose-50 text-rose-700",
       valueClass: "text-rose-700",
+    },
+    {
+      label: "Comments",
+      value: overviewData?.comments?.total ?? 0,
+      icon: "mdi:comment-multiple-outline",
+      accent: "border-emerald-100 bg-emerald-50 text-emerald-700",
+      valueClass: "text-emerald-700",
+    },
+    {
+      label: "Feedbacks",
+      value: 0,
+      icon: "carbon:chat-bot",
+      accent: "border-violet-100 bg-violet-50 text-violet-700",
+      valueClass: "text-violet-700",
     },
   ] as const;
 
