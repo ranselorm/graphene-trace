@@ -91,6 +91,7 @@ INSTALLED_APPS = [
     'telemetry',
     'alerts',
     'comments',
+    'feedback',
 ]
 
 AUTH_USER_MODEL = "accounts.User"

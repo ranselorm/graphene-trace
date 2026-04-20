@@ -25,6 +25,7 @@ const navByRole: Record<Role, NavItem[]> = {
     // { label: "Patients", to: "/admin/patients" },
     // { label: "Clinicians", to: "/admin/clinicians" },
     { label: "Assignments", to: "/admin/assignments" },
+    { label: "Feedback", to: "/admin/feedback" },
     { label: "Settings", to: "/admin/settings" },
   ],
   clinician: [
@@ -32,11 +33,13 @@ const navByRole: Record<Role, NavItem[]> = {
     { label: "Patients", to: "/clinician/patients" },
     { label: "Alerts", to: "/clinician/alerts" },
     { label: "Comments", to: "/clinician/comments" },
+    { label: "Feedback", to: "/clinician/feedback" },
   ],
   patient: [
     { label: "Dashboard", to: "/patient/dashboard", end: true },
     { label: "Reports", to: "/patient/reports" },
     { label: "Comments", to: "/patient/comments" },
+    { label: "Feedback", to: "/patient/feedback" },
   ],
 };
 

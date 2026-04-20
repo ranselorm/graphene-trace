@@ -49,7 +49,7 @@ function CommentItem({
 
   return (
     <div className="my-1.5" style={{ marginLeft: indent }}>
-      <div className="w-full rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur-sm md:p-3">
+      <div className="w-full rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-2.5 ring-1 ring-black/5 backdrop-blur-sm md:p-3">
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-700">
           <div>
             <span className="font-semibold text-zinc-900">
@@ -86,7 +86,7 @@ function CommentItem({
               onChange={(event) => setReplyBody(event.target.value)}
               rows={2}
               placeholder="Write a reply..."
-              className="w-full resize-none rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none"
+              className="w-full resize-none rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none"
             />
             <div className="flex gap-2">
               <Button
@@ -246,11 +246,8 @@ export default function ClinicianCommentsPage() {
 
   return (
     <div className="container mx-auto space-y-4">
-      <section className="rounded-3xl border border-zinc-200 bg-white p-3.5 shadow-sm md:p-4">
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-          Comments
-        </p>
-        <h1 className="text-2xl font-semibold text-zinc-900">
+      <section className="rounded-3xl border border-zinc-200 bg-white p-3.5 md:p-4">
+        <h1 className="text-lg font-semibold text-zinc-900">
           Patient frame discussions
         </h1>
         <p className="mt-2 text-sm text-zinc-600 max-w-2xl">
@@ -347,7 +344,7 @@ export default function ClinicianCommentsPage() {
               onChange={(event) => setCommentBody(event.target.value)}
               rows={3}
               placeholder="Write a note for this frame..."
-              className="w-full resize-none rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none"
+              className="w-full resize-none rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none"
             />
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs text-zinc-500">

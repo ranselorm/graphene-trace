@@ -8,6 +8,7 @@ const links = [
   // { label: "Patients", to: "/admin/patients" },
   // { label: "Clinicians", to: "/admin/clinicians" },
   { label: "Assignments", to: "/admin/assignments" },
+  { label: "Feedback", to: "/admin/feedback" },
   { label: "Settings", to: "/admin/settings" },
 ];
 

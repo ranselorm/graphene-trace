@@ -6,13 +6,16 @@ import Patients from "./pages/admin/Patients";
 import Clinicians from "./pages/admin/Clinicians";
 import Assignments from "./pages/admin/Assignments";
 import Settings from "./pages/admin/Settings";
+import AdminFeedback from "./pages/admin/Feedback";
 import ClinicianOverview from "./pages/clinician/Overview";
 import ClinicianPatients from "./pages/clinician/Patients";
 import ClinicianAlerts from "./pages/clinician/Alerts";
 import ClinicianComments from "./pages/clinician/Comments";
+import ClinicianFeedback from "./pages/clinician/Feedback";
 import PatientDashboard from "./pages/patient/Dashboard";
 import PatientReports from "./pages/patient/Reports";
 import PatientComments from "./pages/patient/Comments";
+import PatientFeedback from "./pages/patient/Feedback";
 
 type RouteConfig = {
   path: string;
@@ -55,6 +58,11 @@ export const adminRoutesConfig: RouteConfig[] = [
     title: "Settings",
     element: React.createElement(Settings),
   },
+  {
+    path: "feedback",
+    title: "Feedback",
+    element: React.createElement(AdminFeedback),
+  },
 ];
 
 export const clinicianRoutesConfig: RouteConfig[] = [
@@ -78,6 +86,11 @@ export const clinicianRoutesConfig: RouteConfig[] = [
     title: "Comments",
     element: React.createElement(ClinicianComments),
   },
+  {
+    path: "feedback",
+    title: "Feedback",
+    element: React.createElement(ClinicianFeedback),
+  },
 ];
 
 export const patientRoutesConfig: RouteConfig[] = [
@@ -95,6 +108,11 @@ export const patientRoutesConfig: RouteConfig[] = [
     path: "reports",
     title: "Reports",
     element: React.createElement(PatientReports),
+  },
+  {
+    path: "feedback",
+    title: "Feedback",
+    element: React.createElement(PatientFeedback),
   },
 ];
 
