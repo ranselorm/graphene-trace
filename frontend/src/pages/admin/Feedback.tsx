@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/authContext";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Icon } from "@iconify/react";
 
 interface Feedback {
   id: number;
@@ -27,8 +25,8 @@ export default function AdminFeedbackPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [stats, setStats] = useState({
     total: 0,
-    by_type: {},
-    by_status: {},
+    by_type: {} as Record<string, number>,
+    by_status: {} as Record<string, number>,
     average_rating: 0,
   });
 

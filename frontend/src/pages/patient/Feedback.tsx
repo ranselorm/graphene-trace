@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/authContext";
 import { Button } from "@/components/ui/button";
@@ -189,10 +189,7 @@ export default function FeedbackPage() {
       <Card className="border-blue-200 bg-blue-50">
         <CardContent className="pt-6 text-sm text-blue-900 space-y-2">
           <div className="flex gap-2">
-            <Icon
-              icon="mdi:lightbulb"
-              className="mt-0.5 flex-shrink-0 text-lg"
-            />
+            <Icon icon="mdi:lightbulb" className="mt-0.5 shrink-0 text-lg" />
             <p>
               <strong>Tip:</strong> Be specific about what you're reporting or
               requesting. Include steps to reproduce bugs when possible.

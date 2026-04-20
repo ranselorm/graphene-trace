@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "@/context/authContext";
 import { Button } from "@/components/ui/button";
