@@ -44,7 +44,7 @@ export default function ClinicianFeedbackPage() {
         },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
 
       toast.success("Thank you! Your feedback has been submitted.");
@@ -153,9 +153,7 @@ export default function ClinicianFeedbackPage() {
                   <button
                     key={star}
                     type="button"
-                    onClick={() =>
-                      setFormData({ ...formData, rating: star })
-                    }
+                    onClick={() => setFormData({ ...formData, rating: star })}
                     className={`h-10 w-10 rounded-lg transition ${
                       formData.rating >= star
                         ? "bg-yellow-100 text-yellow-600"
@@ -194,8 +192,8 @@ export default function ClinicianFeedbackPage() {
             <Icon icon="mdi:lightbulb" className="mt-0.5 shrink-0 text-lg" />
             <p>
               <strong>Tip:</strong> Specific feedback helps us prioritize
-              improvements. Include context like patient data features or workflow
-              issues when possible.
+              improvements. Include context like patient data features or
+              workflow issues when possible.
             </p>
           </div>
         </CardContent>

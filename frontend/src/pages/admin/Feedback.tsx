@@ -51,7 +51,11 @@ export default function AdminFeedbackPage() {
       label: "In Progress",
       color: "bg-yellow-100 text-yellow-900",
     },
-    { value: "resolved", label: "Resolved", color: "bg-green-100 text-green-900" },
+    {
+      value: "resolved",
+      label: "Resolved",
+      color: "bg-green-100 text-green-900",
+    },
   ];
 
   useEffect(() => {
@@ -70,7 +74,7 @@ export default function AdminFeedbackPage() {
         `${import.meta.env.VITE_BASE_URL}/feedback/all/?${params.toString()}`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
 
       setFeedbacks(response.data);
@@ -88,7 +92,7 @@ export default function AdminFeedbackPage() {
         `${import.meta.env.VITE_BASE_URL}/feedback/stats/`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
 
       setStats(response.data);
@@ -104,7 +108,7 @@ export default function AdminFeedbackPage() {
         { status: newStatus },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-        }
+        },
       );
 
       toast.success("Feedback status updated");
@@ -273,7 +277,9 @@ export default function AdminFeedbackPage() {
                       {feedback.user_role})
                     </p>
                   </div>
-                  <div className={`text-lg font-semibold ${getRatingColor(feedback.rating)}`}>
+                  <div
+                    className={`text-lg font-semibold ${getRatingColor(feedback.rating)}`}
+                  >
                     ⭐ {feedback.rating}
                   </div>
                 </div>
@@ -285,13 +291,12 @@ export default function AdminFeedbackPage() {
 
                 {/* Info */}
                 <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-                  <span>
-                    {new Date(feedback.created_at).toLocaleString()}
-                  </span>
+                  <span>{new Date(feedback.created_at).toLocaleString()}</span>
                   <span>•</span>
                   <span className="inline-block rounded-full bg-zinc-100 px-2 py-1 text-zinc-600">
-                    {feedbackTypes.find((t) => t.value === feedback.feedback_type)
-                      ?.label || feedback.feedback_type}
+                    {feedbackTypes.find(
+                      (t) => t.value === feedback.feedback_type,
+                    )?.label || feedback.feedback_type}
                   </span>
                 </div>
 
@@ -300,9 +305,7 @@ export default function AdminFeedbackPage() {
                   {statusOptions.map((option) => (
                     <button
                       key={option.value}
-                      onClick={() =>
-                        updateStatus(feedback.id, option.value)
-                      }
+                      onClick={() => updateStatus(feedback.id, option.value)}
                       className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                         feedback.status === option.value
                           ? `${option.color} ring-2 ring-offset-1`
