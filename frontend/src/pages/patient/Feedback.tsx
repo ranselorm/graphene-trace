@@ -18,10 +18,10 @@ export default function FeedbackPage() {
   });
 
   const feedbackTypes = [
-    { value: "bug", label: "🐛 Bug Report" },
-    { value: "feature", label: "✨ Feature Request" },
-    { value: "ux", label: "🎨 UX/Usability" },
-    { value: "other", label: "💬 Other" },
+    { value: "bug", label: "Bug Report" },
+    { value: "feature", label: "Feature Request" },
+    { value: "ux", label: "UX/Usability" },
+    { value: "other", label: "Other" },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,10 +64,7 @@ export default function FeedbackPage() {
 
   return (
     <div className="container mx-auto space-y-4">
-      <section className="rounded-3xl border border-zinc-200 bg-white p-3.5 shadow-sm md:p-4">
-        <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-          Feedback
-        </p>
+      <section className="rounded-3xl border border-zinc-200 bg-white p-3.5 md:p-4">
         <h1 className="text-2xl font-semibold text-zinc-900">
           Share your feedback
         </h1>
@@ -123,7 +120,7 @@ export default function FeedbackPage() {
                   setFormData({ ...formData, title: e.target.value })
                 }
                 placeholder="Brief title for your feedback..."
-                className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none"
               />
             </div>
 
@@ -139,7 +136,7 @@ export default function FeedbackPage() {
                 }
                 placeholder="Tell us more about your feedback..."
                 rows={5}
-                className="w-full resize-none rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-blue-500 focus:outline-none"
+                className="w-full resize-none rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none"
               />
             </div>
 

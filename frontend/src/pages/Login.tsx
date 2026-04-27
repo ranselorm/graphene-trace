@@ -251,40 +251,14 @@ export function LoginPage() {
                           )}
                         </button>
                       </div>
-
-                      {/* Password Requirements */}
-                      <div className="mt-2 space-y-1.5 text-xs">
-                        <PasswordRequirement
-                          met={passwordValidation.minLength}
-                          text="At least 8 characters"
-                        />
-                        {/* <PasswordRequirement
-                          met={passwordValidation.hasUppercase}
-                          text="One uppercase letter"
-                        /> */}
-                        <PasswordRequirement
-                          met={passwordValidation.hasLowercase}
-                          text="One lowercase letter"
-                        />
-                        <PasswordRequirement
-                          met={passwordValidation.hasNumber}
-                          text="One number"
-                        />
-                        {/* <PasswordRequirement
-                          met={passwordValidation.hasSymbol}
-                          text="One special character"
-                        /> */}
-                      </div>
                     </div>
 
                     <Button
                       type="submit"
                       className="w-full cursor-pointer bg-zinc-800 hover:bg-zinc-900"
-                      // disabled={loading || !isPasswordValid}
                       disabled={loading}
-                      // onClick={handleLogin}
                     >
-                      {loading ? "Login in..." : "Login in"}
+                      {loading ? "Please wait..." : "Login in"}
                     </Button>
                   </form>
 

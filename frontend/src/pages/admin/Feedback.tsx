@@ -124,25 +124,9 @@ export default function AdminFeedbackPage() {
     return "text-red-600";
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "bug":
-        return "🐛";
-      case "feature":
-        return "✨";
-      case "ux":
-        return "🎨";
-      default:
-        return "💬";
-    }
-  };
-
   return (
     <div className="container mx-auto space-y-4">
-      <section className="rounded-3xl border border-zinc-200 bg-white p-3.5 shadow-sm md:p-4">
-        <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-          Admin
-        </p>
+      <section className="rounded-3xl border border-zinc-200 bg-white p-3.5 md:p-4">
         <h1 className="text-2xl font-semibold text-zinc-900">
           Feedback Management
         </h1>
@@ -179,7 +163,7 @@ export default function AdminFeedbackPage() {
         <Card className="border-purple-200 bg-purple-50">
           <CardContent className="pt-6">
             <div className="text-3xl font-semibold text-purple-900">
-              ⭐ {stats.average_rating}
+              {stats.average_rating}
             </div>
             <p className="text-xs text-purple-700 uppercase tracking-[0.12em] mt-1">
               Avg Rating
@@ -263,9 +247,6 @@ export default function AdminFeedbackPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">
-                        {getTypeIcon(feedback.feedback_type)}
-                      </span>
                       <h3 className="font-semibold text-zinc-900">
                         {feedback.title}
                       </h3>
